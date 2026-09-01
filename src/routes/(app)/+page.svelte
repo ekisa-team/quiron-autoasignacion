@@ -87,6 +87,11 @@
   let slotToAssign = $state<AvailabilitySlot | null>(null);
   let showCancelModal = $state(false);
   let appointmentToCancel = $state<Appointment | null>(null);
+  let availableDates = $state<string[]>([]);
+
+  $effect(() => {
+    fetchAvailableDates(venueId, serviceId);
+  });
 
   function validateSearchForm(): boolean {
     const errors: typeof formErrors = {};
@@ -213,6 +218,17 @@
       toast.error("Error de conexión");
     }
   }
+
+  async function fetchAvailableDates(vId: string, sId: string) {
+    try {
+      const res = await fetch(
+        `/api/appointments/available-dates?venueId=${vId}&serviceId=${sId}`,
+      );
+      availableDates = await res.json();
+    } catch {
+      availableDates = [];
+    }
+  }
 </script>
 
 <div class="p-4 sm:p-8">
@@ -234,7 +250,11 @@
     </div>
 
     <div class="flex flex-col lg:col-span-4">
-      <CalendarWidget bind:selectedDate festivos={data.holidays} />
+      <CalendarWidget
+        bind:selectedDate
+        festivos={data.holidays}
+        {availableDates}
+      />
     </div>
   </section>
 

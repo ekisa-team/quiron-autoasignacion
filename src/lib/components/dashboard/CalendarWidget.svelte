@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Calendar } from "$lib/components/ui/calendar";
+  import { Calendar, Day as CalendarDay } from "$lib/components/ui/calendar";
   import type { DateValue } from "@internationalized/date";
   import { getLocalTimeZone, today } from "@internationalized/date";
   import IconCalendar from "~icons/lucide/calendar";
@@ -7,9 +7,11 @@
   let {
     selectedDate = $bindable(),
     festivos = [],
+    availableDates = [],
   }: {
     selectedDate: DateValue | undefined;
     festivos?: string[];
+    availableDates?: string[];
   } = $props();
 
   const formattedDate = $derived(
@@ -51,6 +53,23 @@
       minValue={today(getLocalTimeZone())}
       isDateUnavailable={checkUnavailable}
       class="border-0 p-0 shadow-none **:data-unavailable:bg-red-50 **:data-unavailable:font-semibold **:data-unavailable:text-red-500 **:data-unavailable:line-through"
-    />
+    >
+      {#snippet day({ day: cellDate, outsideMonth })}
+        {@const dateStr = cellDate.toString()}
+        {@const hasAvailability = availableDates.includes(dateStr)}
+        <div class="relative flex size-full items-center justify-center">
+          <CalendarDay
+            class={hasAvailability && !outsideMonth
+              ? "font-bold text-[#0e7490] ring-1.5 ring-[#3c8ea5] bg-cyan-50/50"
+              : ""}
+          />
+          {#if hasAvailability && !outsideMonth}
+            <span
+              class="absolute bottom-0.5 size-1 rounded-full bg-[#3c8ea5] pointer-events-none"
+            ></span>
+          {/if}
+        </div>
+      {/snippet}
+    </Calendar>
   </div>
 </div>
