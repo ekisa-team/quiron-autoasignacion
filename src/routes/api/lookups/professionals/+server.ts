@@ -1,20 +1,21 @@
-import { executeProcedure } from "$lib/server/db";
+import { apiGet } from "$lib/server/api";
 import { json, type RequestHandler } from "@sveltejs/kit";
-import mssql from "mssql";
+
+interface ProfessionalRow {
+  IdProfesional?: number;
+  idProfesional?: number;
+  NombreProfesional?: string;
+  nombreProfesional?: string;
+}
 
 export const GET: RequestHandler = async ({ locals }) => {
   try {
-    const clientId = locals.clientId;
-    const profesionales = await executeProcedure(
-      clientId,
-      "Proc_Autoasignacion_ConsultarProfesionales",
-      {
-        IdCliente: { type: mssql.Int, value: clientId },
-      },
-    );
-    return json(profesionales);
+    const clientId = locals.clientId || 67;
+    const professionals = await apiGet<ProfessionalRow[]>("/profesionales", {
+      id_cliente: clientId,
+    });
+    return json(professionals || []);
   } catch (error) {
-    console.error("[API Profesionales Error]:", error);
     return json([], { status: 500 });
   }
 };

@@ -1,11 +1,14 @@
-import { executeProcedure, executeQuery } from "$lib/server/db";
+import { apiGet } from "$lib/server/api";
 import type {
   Appointment,
   AppointmentType,
   MedicalService,
+  RawActivityApi,
+  RawAppointmentApi,
+  RawServiceApi,
+  RawVenueApi,
   Venue,
 } from "$lib/types/appointments";
-import mssql from "mssql";
 import type { PageServerLoad } from "./$types";
 
 function parseAppointmentDateTime(
@@ -41,45 +44,9 @@ function parseAppointmentDateTime(
   return new Date(year, month, day, hours, minutes, 0);
 }
 
-interface SedeSqlRow {
-  IdSede?: number;
-  idSede?: number;
-  NombreSede?: string;
-  nombreSede?: string;
-}
-interface ServicioSqlRow {
-  IdServicio?: number;
-  idServicio?: number;
-  NombreServicio?: string;
-  nombreServicio?: string;
-}
-interface ActividadSqlRow {
-  IdActividad?: number;
-  idActividad?: number;
-  IdServicio?: number | null;
-  idServicio?: number | null;
-  NombreActividad?: string;
-  nombreActividad?: string;
-}
-interface FestivoSqlRow {
-  fechaCalendario?: Date;
-  FechaCalendario?: Date;
-}
-interface CitaSqlRow {
-  ClaveCita?: number;
-  claveCita?: number;
-  NombreActividad?: string;
-  nombreActividad?: string;
-  NombreProfesional?: string;
-  nombreProfesional?: string;
-  FechaCita?: string;
-  fechaCita?: string;
-  HoraCita?: string;
-  horaCita?: string;
-  NombreSede?: string;
-  nombreSede?: string;
-  EstadoServicio?: string;
-  estadoServicio?: string;
+interface HolidayApiRow {
+  fechaCalendario?: string | Date;
+  FechaCalendario?: string | Date;
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -94,45 +61,17 @@ export const load: PageServerLoad = async ({ locals }) => {
       holidaysRes,
       appointmentsRes,
     ] = await Promise.all([
-      executeProcedure<SedeSqlRow>(
-        clientId,
-        "Proc_Autoasignacion_ConsultarSedes",
-        {
-          IdCliente: { type: mssql.Int, value: clientId },
-        },
-      ).catch(() => []),
-
-      executeProcedure<ServicioSqlRow>(
-        clientId,
-        "Proc_Aut_ConsultarServicios",
-        {
-          IdCliente: { type: mssql.Int, value: clientId },
-        },
-      ).catch(() => []),
-
-      executeProcedure<ActividadSqlRow>(
-        clientId,
-        "Proc_Aut_ConsultarActividadesPorServicio",
-        {
-          IdCliente: { type: mssql.Int, value: clientId },
-          IdServicio: { type: mssql.Int, value: 0 },
-        },
-      ).catch(() => []),
-
-      executeQuery<FestivoSqlRow>(
-        clientId,
-        `SELECT fechaCalendario FROM dbo.Festivos`,
-      ).catch(() => []),
-
+      apiGet<RawVenueApi[]>("/sedes", { id_cliente: clientId }),
+      apiGet<RawServiceApi[]>("/servicios", { id_cliente: clientId }),
+      apiGet<RawActivityApi[]>("/actividades", {
+        id_cliente: clientId,
+        id_servicio: 0,
+      }),
+      apiGet<HolidayApiRow[]>("/lookups/holidays"),
       patientCode > 0
-        ? executeProcedure<CitaSqlRow>(
-            clientId,
-            "Proc_Aut_ConsultarCitasPaciente",
-            {
-              CodigoPaciente: { type: mssql.Int, value: patientCode },
-              IdCliente: { type: mssql.Int, value: clientId },
-            },
-          ).catch(() => [])
+        ? apiGet<RawAppointmentApi[]>(`/pacientes/${patientCode}/citas`, {
+            id_cliente: clientId,
+          })
         : [],
     ]);
 
@@ -143,7 +82,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
     const services: MedicalService[] = (servicesRes || []).map((s) => ({
       id: s.IdServicio ?? s.idServicio ?? 0,
-      name: s.NombreServicio ?? s.nombreServicio ?? "",
+      name: s.NombreServicio ?? s.nombreServicio ?? s.Nombre ?? "",
     }));
 
     const activities: AppointmentType[] = (activitiesRes || []).map((a) => ({
@@ -153,7 +92,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     }));
 
     const holidays: string[] = (holidaysRes || [])
-      .map((f) => {
+      .map((f: HolidayApiRow): string | null => {
         const raw = f.fechaCalendario ?? f.FechaCalendario;
         if (!raw) return null;
         const d = new Date(raw);
@@ -206,8 +145,7 @@ export const load: PageServerLoad = async ({ locals }) => {
         totalPages: Math.ceil(allPast.length / 5) || 1,
       },
     };
-  } catch (error) {
-    console.error("[Page Load Error]:", error);
+  } catch {
     return {
       user: locals.user,
       venues: [],

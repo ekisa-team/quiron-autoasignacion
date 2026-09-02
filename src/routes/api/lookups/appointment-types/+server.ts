@@ -1,20 +1,22 @@
-import { executeProcedure } from "$lib/server/db";
+import { apiGet } from "$lib/server/api";
+import type { RawActivityApi } from "$lib/types/appointments";
 import { json, type RequestHandler } from "@sveltejs/kit";
-import mssql from "mssql";
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
   try {
-    const clientId = locals.clientId;
-    const actividades = await executeProcedure(
-      clientId,
-      "Proc_Autoasignacion_ConsultarActividadesCitas",
-      {
-        IdCliente: { type: mssql.Int, value: clientId },
-      },
-    );
-    return json(actividades);
-  } catch (error) {
-    console.error("[API Actividades Error]:", error);
+    const clientId = locals.clientId || 67;
+    const serviceId = Number(url.searchParams.get("idServicio")) || 0;
+
+    const activities =
+      serviceId > 0
+        ? await apiGet<RawActivityApi[]>("/actividades", {
+            id_cliente: clientId,
+            id_servicio: serviceId,
+          })
+        : await apiGet<RawActivityApi[]>("/actividades/todas");
+
+    return json(activities || []);
+  } catch {
     return json([], { status: 500 });
   }
 };
