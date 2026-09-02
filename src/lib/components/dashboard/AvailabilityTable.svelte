@@ -26,25 +26,24 @@
 </script>
 
 <Table.Root>
-  <Table.TableHeader class="bg-slate-50">
+  <Table.TableHeader class="bg-[#528ca2]">
     <Table.TableRow>
-      <Table.TableHead class="text-[13px] font-semibold text-slate-700"
+      <Table.TableHead class="text-[13px] font-semibold text-white"
         >Fecha</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-slate-700"
+      <Table.TableHead class="text-[13px] font-semibold text-white"
         >Hora</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-slate-700"
+      <Table.TableHead class="text-[13px] font-semibold text-white"
         >Sede</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-slate-700"
+      <Table.TableHead class="text-[13px] font-semibold text-white"
         >Profesional/equipo</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-slate-700"
+      <Table.TableHead class="text-[13px] font-semibold text-white"
         >Dirección</Table.TableHead
       >
-      <Table.TableHead
-        class="text-right text-[13px] font-semibold text-slate-700"
+      <Table.TableHead class="text-right text-[13px] font-semibold text-white"
         >Acción</Table.TableHead
       >
     </Table.TableRow>
@@ -92,7 +91,7 @@
 
 {#if slots.length > 0}
   <div
-    class="mt-4 flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-3 text-[13px] text-slate-600 sm:flex-row"
+    class="mt-4 flex flex-col items-center justify-between gap-3 border-t border-slate-200 p-3 text-[13px] text-slate-600 sm:flex-row"
   >
     <div class="flex items-center gap-2">
       <span>Filas por página:</span>

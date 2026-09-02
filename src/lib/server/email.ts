@@ -1,7 +1,6 @@
 import { env } from "$env/dynamic/private";
-import mssql from "mssql";
 import nodemailer from "nodemailer";
-import { getTenantDb } from "./db";
+import { apiGet } from "./api";
 
 interface EmailParams {
   host: string;
@@ -13,32 +12,21 @@ interface EmailParams {
   enableSsl: boolean;
 }
 
+interface SmtpApiResponse {
+  EmailServidorSmtp?: string;
+  EmailPuertoSmtp?: number;
+  EmailUsuarioSmtp?: string;
+  EmailPasswordSmtp?: string;
+  EmailHabilitarSsl?: boolean;
+  EmailNombreRemitente?: string;
+}
+
 async function getEmailConfig(clientId: number): Promise<EmailParams | null> {
   try {
-    const pool = await getTenantDb(clientId);
-    const request = pool.request();
-    request.input("clientId", mssql.Int, clientId);
-
-    const result = await request.query<{
-      EmailServidorSmtp?: string;
-      EmailPuertoSmtp?: number;
-      EmailUsuarioSmtp?: string;
-      EmailPasswordSmtp?: string;
-      EmailHabilitarSsl?: boolean;
-      EmailNombreRemitente?: string;
-    }>(`
-			SELECT TOP 1 
-				EmailServidorSmtp,
-				EmailPuertoSmtp,
-				EmailUsuarioSmtp,
-				EmailPasswordSmtp,
-				EmailHabilitarSsl,
-				EmailNombreRemitente
-			FROM dbo.ParametrosEnvio 
-			WHERE IdCliente = @clientId
-		`);
-
-    const row = result.recordset[0];
+    const row = await apiGet<SmtpApiResponse>(
+      "/configuracion/parametros-envio",
+      { id_cliente: clientId },
+    );
 
     if (!row || !row.EmailUsuarioSmtp || !row.EmailPasswordSmtp) {
       return null;
@@ -53,7 +41,7 @@ async function getEmailConfig(clientId: number): Promise<EmailParams | null> {
       display: row.EmailNombreRemitente || "Quirón Instituciones",
       enableSsl: row.EmailHabilitarSsl ?? true,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -91,7 +79,7 @@ export async function sendEmail(
     });
 
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

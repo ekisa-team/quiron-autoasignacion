@@ -1,8 +1,11 @@
-import { executeProcedure } from "$lib/server/db";
+import { apiGet } from "$lib/server/api";
+import type { RawSlotApi } from "$lib/types/appointments";
 import { json, type RequestHandler } from "@sveltejs/kit";
-import mssql from "mssql";
 
-function parseSlotDateTime(fecha: any, hora: any): Date {
+function parseSlotDateTime(
+  fecha: string | Date | undefined,
+  hora: string | Date | undefined,
+): Date {
   let year = 2026,
     month = 0,
     day = 1;
@@ -45,21 +48,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       );
     }
 
-    const rawSlots = await executeProcedure<any>(
-      clientId,
-      "Proc_Aut_AgendaCitas",
-      {
-        FechaC: { type: mssql.SmallDateTime, value: new Date(fechaC) },
-        IdSede: { type: mssql.Int, value: Number(idSede) },
-        IdCliente: { type: mssql.Int, value: clientId },
-        IdProfesional: { type: mssql.Int, value: Number(idProfesional) || 0 },
-        IdServicio: { type: mssql.Int, value: Number(idServicio) || 0 },
-        IdActividad: { type: mssql.Int, value: Number(idActividad) || 0 },
-      },
-    );
+    const rawSlots = await apiGet<RawSlotApi[]>("/agenda", {
+      fecha: String(fechaC).split("T")[0],
+      id_sede: Number(idSede),
+      id_cliente: clientId,
+      id_profesional: Number(idProfesional) || 0,
+      id_servicio: Number(idServicio) || 0,
+      id_actividad: Number(idActividad) || 0,
+    });
 
     const minTimeAllowed = new Date(Date.now() + 10 * 60 * 1000);
-    const availableSlots = (rawSlots || []).filter((slot: any) => {
+    const availableSlots = (rawSlots || []).filter((slot) => {
       const slotDateTime = parseSlotDateTime(
         slot.FechaCita || slot.fechaCita,
         slot.HoraCita || slot.horaCita,
@@ -68,8 +67,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     });
 
     return json(availableSlots);
-  } catch (error: any) {
-    console.error("[API Availability Error]:", error.message);
+  } catch {
     return json([], { status: 500 });
   }
 };

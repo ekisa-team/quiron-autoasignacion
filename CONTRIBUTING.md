@@ -28,10 +28,17 @@ Gracias por contribuir a este proyecto. Para mantener la calidad, seguridad y co
   - Ejemplo: `futureAppointments`, `handleAssignAppointment`, `AvailabilitySlot`.
 - **Textos de UI y mensajes de error:** En **Español (es-CO)** orientado al paciente.
 
-### 4. Consultas a Base de Datos
+### 4. Modificaciones en la Base de Datos (HCLAPI vs SvelteKit)
 
-- Toda interacción con la base de datos de los clientes debe realizarse mediante **Stored Procedures** tipados a través del helper `executeProcedure()`.
-- No escribir consultas SQL inline directamente en componentes o endpoints.
+**Regla Estricta:** 🛑 SvelteKit NUNCA debe conectarse directamente a la base de datos ni importar el paquete `mssql`.
+
+Si necesita modificar una consulta SQL o consumir un nuevo Stored Procedure:
+
+1. Navegue a `hclapi/escanografia/routes/` y edite o cree un archivo `.hcl`.
+2. Defina la lógica en HCL (schema, pipeline, sql, respond).
+3. Pruebe el nuevo endpoint accediendo a `http://localhost:8080/docs`.
+4. En SvelteKit, abra `src/lib/server/api.ts` y utilice `apiGet` o `apiPost` para consumir ese endpoint.
+5. Defina las interfaces en `src/lib/types/` utilizando el prefijo `Raw` para mapear los JSON retornados por el driver de Go (ej. `RawAppointmentApi`).
 
 ---
 

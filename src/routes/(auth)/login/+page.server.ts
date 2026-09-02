@@ -1,29 +1,39 @@
-import { executeQuery } from "$lib/server/db";
+import { apiGet } from "$lib/server/api";
 import type { DocumentTypeOption } from "$lib/types/appointments";
 import type { PageServerLoad } from "./$types";
+
+interface DocumentTypeApiRow {
+  CodigoDocumento?: string;
+  codigoDocumento?: string;
+  NombreDocumento?: string;
+  nombreDocumento?: string;
+}
 
 export const load: PageServerLoad = async ({ locals }) => {
   const clientId = locals.clientId || 67;
 
   try {
-    const docs = await executeQuery<{
-      codigoDocumento: string;
-      nombreDocumento: string;
-    }>(
-      clientId,
-      `SELECT codigoDocumento, nombreDocumento 
-			 FROM dbo.TiposDocumento 
-			 WHERE Proceso = 'PAC' 
-			 ORDER BY orden ASC`,
-    );
+    const docs = await apiGet<DocumentTypeApiRow[]>("/lookups/document-types", {
+      id_cliente: clientId,
+    });
 
-    const documentTypes: DocumentTypeOption[] = docs.map((d) => ({
-      value: d.codigoDocumento,
-      label: d.nombreDocumento,
-    }));
+    const documentTypes: DocumentTypeOption[] = (docs || [])
+      .map((d: DocumentTypeApiRow) => ({
+        value: d.CodigoDocumento ?? d.codigoDocumento ?? "",
+        label: d.NombreDocumento ?? d.nombreDocumento ?? "",
+      }))
+      .filter((d: DocumentTypeOption) => d.value !== "");
 
     return {
-      documentTypes,
+      documentTypes:
+        documentTypes.length > 0
+          ? documentTypes
+          : [
+              { value: "CC", label: "Cédula de Ciudadanía" },
+              { value: "TI", label: "Tarjeta de Identidad" },
+              { value: "CE", label: "Cédula de Extranjería" },
+              { value: "PA", label: "Pasaporte" },
+            ],
       clientId,
     };
   } catch (error) {

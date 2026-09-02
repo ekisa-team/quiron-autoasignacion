@@ -17,34 +17,21 @@ export interface LoginCredentials {
   clientId?: number;
 }
 
-export interface RegisterPatientPayload {
-  documentType: string;
-  identification: string;
-  firstName: string;
-  secondName?: string;
-  firstLastName: string;
-  secondLastName?: string;
-  birthDate: string;
-  gender: string;
-  address?: string;
-  phone?: string;
-  mobile: string;
-  email: string;
-  password: string;
-  captchaToken?: string;
-  clientId?: number;
-}
-
-export interface ResetPasswordPayload {
-  token: string;
-  newPassword: string;
-  clientId?: number;
-}
-
-export interface ForgotPasswordPayload {
-  documentType: string;
-  identification: string;
-  email: string;
-  captchaToken?: string;
-  clientId?: number;
+export interface RawPatientLoginApi {
+  CodigoPaciente: number;
+  IdentificacionPaciente: string;
+  CodigoTipoDocumento: string;
+  Nombre1Paciente: string | null;
+  Nombre2Paciente: string | null;
+  Apellido1Paciente: string | null;
+  Apellido2Paciente: string | null;
+  CorreoPaciente: string | null;
+  CelularPaciente: string | null;
+  TelefonoPaciente: string | null;
+  UsuarioId: number | null;
+  PasswordHash: string | null;
+  EmailVerified: boolean | null;
+  PhoneVerified: boolean | null;
+  LoginAttempts: number | null;
+  LockedUntil: string | null;
 }

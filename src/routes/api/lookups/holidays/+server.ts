@@ -1,16 +1,27 @@
-import { executeQuery } from "$lib/server/db";
+import { apiGet } from "$lib/server/api";
 import { json, type RequestHandler } from "@sveltejs/kit";
+
+interface HolidayRow {
+  fechaCalendario?: string | Date;
+  FechaCalendario?: string | Date;
+}
 
 export const GET: RequestHandler = async ({ locals }) => {
   try {
-    const clientId = locals.clientId;
-    const festivos = await executeQuery<{ fechaCalendario: Date }>(
-      clientId,
-      `SELECT fechaCalendario FROM dbo.Festivos`,
-    );
-    return json(festivos.map((f) => f.fechaCalendario));
+    const clientId = locals.clientId || 67;
+    const holidays = await apiGet<HolidayRow[]>("/lookups/holidays", {
+      id_cliente: clientId,
+    });
+
+    const result = (holidays || [])
+      .map((f: HolidayRow) => {
+        const val = f.fechaCalendario ?? f.FechaCalendario;
+        return val ? new Date(val) : null;
+      })
+      .filter((d): d is Date => d !== null);
+
+    return json(result);
   } catch (error) {
-    console.error("[API Festivos Error]:", error);
     return json([], { status: 500 });
   }
 };

@@ -1,8 +1,11 @@
-import { getTenantDb } from "$lib/server/db";
+import { apiPost } from "$lib/server/api";
 import { sendPasswordChangeNotification } from "$lib/server/email";
 import { hashPassword } from "$lib/server/password";
 import { json, type RequestHandler } from "@sveltejs/kit";
-import mssql from "mssql";
+
+interface ResetPasswordApiResponse {
+  email?: string;
+}
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
@@ -27,85 +30,36 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       );
     }
 
-    const pool = await getTenantDb(activeClientId);
+    const newHash = await hashPassword(newPassword);
 
-    // 1. Buscar usuario por PasswordResetSecret en dbo.UsuarioPaciente
-    const userReq = pool.request();
-    userReq.input("token", mssql.VarChar(255), String(token).trim());
-    userReq.input("clientId", mssql.Int, activeClientId);
+    const result = await apiPost<ResetPasswordApiResponse>(
+      "/auth/restablecer-clave",
+      {
+        token: String(token).trim(),
+        new_password_hash: newHash,
+        client_id: activeClientId,
+      },
+    );
 
-    const userRes = await userReq.query(`
-			SELECT TOP 1 
-				u.Id, u.PatientId, u.ClientId, u.PasswordResetExpiresAt, 
-				p.CorreoPaciente, p.IdentificacionPaciente
-			FROM dbo.UsuarioPaciente u
-			INNER JOIN dbo.Pacientes p ON p.CodigoPaciente = u.PatientId
-			WHERE u.PasswordResetSecret = @token
-			  AND u.ClientId = @clientId
-		`);
-
-    const user = userRes.recordset[0];
-    if (!user) {
-      console.warn(
-        `⚠️ [Reset Password] No se encontró ningún usuario con el token "${token}" en el cliente ${activeClientId}`,
-      );
+    if (!result.ok) {
       return json(
         {
           success: false,
-          message: "El enlace de recuperación es inválido o no existe",
+          message: "El enlace de recuperación es inválido o ha expirado",
         },
-        { status: 404 },
+        { status: 400 },
       );
     }
 
-    // 2. Validar expiración de forma segura
-    if (user.PasswordResetExpiresAt) {
-      const expiryDate = new Date(user.PasswordResetExpiresAt);
-      // Si la fecha de expiración es menor a ahora mismo en UTC
-      if (expiryDate.getTime() < Date.now()) {
-        console.warn(
-          `⚠️ [Reset Password] El token expiró en: ${user.PasswordResetExpiresAt}`,
-        );
-        return json(
-          {
-            success: false,
-            message:
-              "El enlace de recuperación ha expirado. Por favor solicita uno nuevo.",
-          },
-          { status: 410 },
-        );
-      }
-    }
-
-    // 3. Hashear nueva contraseña con Argon2id
-    const newHash = await hashPassword(newPassword);
-
-    // 4. Actualizar en dbo.UsuarioPaciente y limpiar el token
-    const updateReq = pool.request();
-    updateReq.input("id", mssql.Int, user.Id);
-    updateReq.input("hash", mssql.VarChar(255), newHash);
-
-    await updateReq.query(`
-			UPDATE dbo.UsuarioPaciente
-			SET PasswordHash = @hash, 
-			    PasswordResetSecret = NULL, 
-			    PasswordResetExpiresAt = NULL, 
-			    LoginAttempts = 0,
-			    LockedUntil = NULL,
-			    UpdatedAt = SYSUTCDATETIME()
-			WHERE Id = @id
-		`);
-
-    if (user.CorreoPaciente) {
-      await sendPasswordChangeNotification(activeClientId, user.CorreoPaciente);
+    if (result.data?.email) {
+      await sendPasswordChangeNotification(activeClientId, result.data.email);
     }
 
     return json({
       success: true,
       message: "Contraseña restablecida con éxito. Ya puedes iniciar sesión.",
     });
-  } catch (error: any) {
-    console.error("❌ [Reset Password Error]:", error.message);
+  } catch (error) {
     return json(
       { success: false, message: "Error interno al restablecer la contraseña" },
       { status: 500 },
