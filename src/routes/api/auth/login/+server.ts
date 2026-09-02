@@ -1,27 +1,8 @@
-import { executeProcedure, getTenantDb } from "$lib/server/db";
+import { apiPost } from "$lib/server/api";
 import { generateAccessToken, generateRefreshToken } from "$lib/server/jwt";
 import { verifyPassword } from "$lib/server/password";
+import type { RawPatientLoginApi } from "$lib/types/auth";
 import { json, type RequestHandler } from "@sveltejs/kit";
-import mssql from "mssql";
-
-interface PacienteLoginRow {
-  CodigoPaciente: number;
-  IdentificacionPaciente: string;
-  CodigoTipoDocumento: string;
-  Nombre1Paciente: string | null;
-  Nombre2Paciente: string | null;
-  Apellido1Paciente: string | null;
-  Apellido2Paciente: string | null;
-  CorreoPaciente: string | null;
-  CelularPaciente: string | null;
-  TelefonoPaciente: string | null;
-  UsuarioId: number | null;
-  PasswordHash: string | null;
-  EmailVerified: boolean | null;
-  PhoneVerified: boolean | null;
-  LoginAttempts: number | null;
-  LockedUntil: Date | null;
-}
 
 export const POST: RequestHandler = async ({ request, cookies, locals }) => {
   try {
@@ -36,25 +17,15 @@ export const POST: RequestHandler = async ({ request, cookies, locals }) => {
       );
     }
 
-    const result = await executeProcedure<PacienteLoginRow>(
-      clientId,
-      "Proc_Aut_ConsultarPacienteLogin",
-      {
-        Identificacion: {
-          type: mssql.VarChar(20),
-          value: String(identification).trim(),
-        },
-        CodigoTipoDocumento: {
-          type: mssql.VarChar(2),
-          value: String(documentType).trim(),
-        },
-        IdCliente: { type: mssql.Int, value: clientId },
-      },
-    );
+    const response = await apiPost<RawPatientLoginApi>("/auth/login", {
+      identificacion: String(identification).trim(),
+      codigo_tipo_documento: String(documentType).trim(),
+      id_cliente: clientId,
+    });
 
-    const user = result[0];
+    const user = response.data;
 
-    if (!user || !user.UsuarioId || !user.PasswordHash) {
+    if (!response.ok || !user || !user.UsuarioId || !user.PasswordHash) {
       return json(
         {
           success: false,
@@ -80,51 +51,49 @@ export const POST: RequestHandler = async ({ request, cookies, locals }) => {
     }
 
     const isPasswordValid = await verifyPassword(password, user.PasswordHash);
-    const pool = await getTenantDb(clientId);
 
     if (!isPasswordValid) {
-      const attempts = (user.LoginAttempts || 0) + 1;
-      const lockReq = pool.request();
-      lockReq.input("id", mssql.Int, user.UsuarioId);
-      lockReq.input("attempts", mssql.Int, attempts);
+      const failedRes = await apiPost<{ Intentos: number; Bloqueado: number }>(
+        "/auth/intento-fallido",
+        {
+          usuario_id: user.UsuarioId,
+        },
+      );
 
-      if (attempts >= 5) {
-        await lockReq.query(`
-					UPDATE dbo.UsuarioPaciente 
-					SET LoginAttempts = @attempts, LockedUntil = DATEADD(minute, 15, SYSUTCDATETIME()), UpdatedAt = SYSUTCDATETIME() 
-					WHERE Id = @id
-				`);
-        return json(
-          {
-            success: false,
-            message:
-              "Has superado el límite de 5 intentos. Tu cuenta ha sido bloqueada por 15 minutos.",
-          },
-          { status: 403 },
-        );
+      if (failedRes.ok && failedRes.data) {
+        if (failedRes.data.Bloqueado === 1) {
+          return json(
+            {
+              success: false,
+              message:
+                "Has superado el límite de 5 intentos. Tu cuenta ha sido bloqueada por 15 minutos.",
+            },
+            { status: 403 },
+          );
+        } else {
+          const intentosRestantes = 5 - failedRes.data.Intentos;
+          return json(
+            {
+              success: false,
+              message: `Identificación o contraseña incorrecta. Intentos restantes: ${intentosRestantes}`,
+            },
+            { status: 401 },
+          );
+        }
       } else {
-        await lockReq.query(`
-					UPDATE dbo.UsuarioPaciente 
-					SET LoginAttempts = @attempts, UpdatedAt = SYSUTCDATETIME() 
-					WHERE Id = @id
-				`);
         return json(
           {
             success: false,
-            message: `Identificación o contraseña incorrecta. Intentos restantes: ${5 - attempts}`,
+            message: "Identificación o contraseña incorrecta.",
           },
           { status: 401 },
         );
       }
     }
 
-    const successReq = pool.request();
-    successReq.input("id", mssql.Int, user.UsuarioId);
-    await successReq.query(`
-			UPDATE dbo.UsuarioPaciente 
-			SET LoginAttempts = 0, LockedUntil = NULL, LastLoginAt = SYSUTCDATETIME(), UpdatedAt = SYSUTCDATETIME() 
-			WHERE Id = @id
-		`);
+    await apiPost("/auth/login-exitoso", {
+      usuario_id: user.UsuarioId,
+    });
 
     const fullName =
       `${user.Nombre1Paciente || ""} ${user.Nombre2Paciente || ""} ${user.Apellido1Paciente || ""} ${user.Apellido2Paciente || ""}`
@@ -178,7 +147,7 @@ export const POST: RequestHandler = async ({ request, cookies, locals }) => {
       },
     });
   } catch (error) {
-    console.error("[API Login Error]:", error);
+    console.error("[Login Error]:", error);
     return json(
       { success: false, message: "Error interno del servidor" },
       { status: 500 },

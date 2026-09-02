@@ -1,8 +1,8 @@
-import { executeProcedure, getTenantDb } from "$lib/server/db";
+import { apiPost } from "$lib/server/api";
 import { sendPasswordChangeNotification } from "$lib/server/email";
 import { hashPassword, verifyPassword } from "$lib/server/password";
+import type { RawPatientLoginApi } from "$lib/types/auth";
 import { json, type RequestHandler } from "@sveltejs/kit";
-import mssql from "mssql";
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
@@ -35,20 +35,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       );
     }
 
-    const pool = await getTenantDb(clientId);
+    const loginCheck = await apiPost<RawPatientLoginApi>("/auth/login", {
+      identificacion: locals.user.patientIdentification,
+      codigo_tipo_documento: "CC",
+      id_cliente: clientId,
+    });
 
-    const userReq = pool.request();
-    userReq.input("patientId", mssql.Int, patientId);
-    userReq.input("clientId", mssql.Int, clientId);
-
-    const userRes = await userReq.query(`
-			SELECT TOP 1 Id, PasswordHash 
-			FROM dbo.UsuarioPaciente 
-			WHERE PatientId = @patientId AND ClientId = @clientId
-		`);
-
-    const user = userRes.recordset[0];
-    if (!user) {
+    const user = loginCheck.data;
+    if (!user || !user.PasswordHash) {
       return json(
         { success: false, message: "Usuario no encontrado" },
         { status: 404 },
@@ -68,21 +62,30 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
     const newHash = await hashPassword(newPassword);
 
-    await executeProcedure(clientId, "Proc_Aut_CambiarClaveSesion", {
-      PatientId: { type: mssql.Int, value: patientId },
-      ClientId: { type: mssql.Int, value: clientId },
-      NewPasswordHash: { type: mssql.VarChar(255), value: newHash },
-    });
+    const result = await apiPost<{ status: string; message: string }>(
+      "/auth/cambiar-clave",
+      {
+        patient_id: patientId,
+        client_id: clientId,
+        new_password_hash: newHash,
+      },
+    );
+
+    if (!result.ok) {
+      return json(
+        { success: false, message: "Error al actualizar contraseña" },
+        { status: 500 },
+      );
+    }
 
     if (locals.user.email) {
       await sendPasswordChangeNotification(clientId, locals.user.email);
     }
 
     return json({ success: true, message: "Contraseña cambiada exitosamente" });
-  } catch (error: any) {
-    console.error("[Change Password Error]:", error);
+  } catch {
     return json(
-      { success: false, message: "Error interno al cambiar la contraseña" },
+      { success: false, message: "Error interno del servidor" },
       { status: 500 },
     );
   }

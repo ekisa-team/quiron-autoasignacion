@@ -1,9 +1,14 @@
-import { getTenantDb } from "$lib/server/db";
+import { apiPost } from "$lib/server/api";
 import { sendPasswordResetEmail } from "$lib/server/email";
 import { generateSecureToken } from "$lib/server/password";
 import { verifyTurnstileToken } from "$lib/server/turnstile";
 import { json, type RequestHandler } from "@sveltejs/kit";
-import mssql from "mssql";
+
+interface PasswordResetApiResponse {
+  patient_id?: number;
+  email?: string;
+  identification?: string;
+}
 
 export const POST: RequestHandler = async ({
   request,
@@ -35,68 +40,26 @@ export const POST: RequestHandler = async ({
       );
     }
 
-    const pool = await getTenantDb(clientId);
+    const resetToken = generateSecureToken(32);
 
-    const patReq = pool.request();
-    patReq.input("doc", mssql.VarChar(20), String(identification).trim());
-    patReq.input("docType", mssql.VarChar(2), String(documentType).trim());
-    patReq.input(
-      "email",
-      mssql.VarChar(50),
-      String(email).trim().toLowerCase(),
+    const result = await apiPost<PasswordResetApiResponse>(
+      "/auth/solicitar-recuperacion",
+      {
+        document_type: String(documentType).trim(),
+        identification: String(identification).trim(),
+        email: String(email).trim().toLowerCase(),
+        reset_token: resetToken,
+        client_id: clientId,
+      },
     );
-    patReq.input("clientId", mssql.Int, clientId);
 
-    const patRes = await patReq.query(`
-			SELECT TOP 1 CodigoPaciente, IdentificacionPaciente, CorreoPaciente
-			FROM dbo.Pacientes
-			WHERE IdentificacionPaciente = @doc 
-			  AND CodigoTipoDocumento = @docType
-			  AND CorreoPaciente = @email 
-			  AND IdCliente = @clientId
-		`);
-
-    const patient = patRes.recordset[0];
-
-    if (!patient) {
-      console.warn(
-        `⚠️ [Forgot Password] No se encontró ningún paciente con esos 3 datos en la BD del cliente ${clientId}`,
+    if (result.ok && result.data?.email) {
+      await sendPasswordResetEmail(
+        clientId,
+        result.data.email,
+        identification,
+        resetToken,
       );
-    } else {
-      const userReq = pool.request();
-      userReq.input("patientId", mssql.Int, patient.CodigoPaciente);
-      userReq.input("clientId", mssql.Int, clientId);
-
-      const userRes = await userReq.query(`
-				SELECT TOP 1 Id FROM dbo.UsuarioPaciente WHERE PatientId = @patientId AND ClientId = @clientId
-			`);
-
-      if (userRes.recordset.length === 0) {
-        console.warn(
-          `⚠️ [Forgot Password] El paciente existe en dbo.Pacientes pero NO tiene registro en dbo.UsuarioPaciente`,
-        );
-      } else {
-        const resetToken = generateSecureToken(32);
-
-        const updateReq = pool.request();
-        updateReq.input("patientId", mssql.Int, patient.CodigoPaciente);
-        updateReq.input("clientId", mssql.Int, clientId);
-        updateReq.input("token", mssql.VarChar(255), resetToken);
-
-        await updateReq.query(`
-					UPDATE dbo.UsuarioPaciente
-					SET PasswordResetSecret = @token, 
-					    PasswordResetExpiresAt = DATEADD(hour, 1, SYSUTCDATETIME()), 
-					    UpdatedAt = SYSUTCDATETIME()
-					WHERE PatientId = @patientId AND ClientId = @clientId
-				`);
-        await sendPasswordResetEmail(
-          clientId,
-          patient.CorreoPaciente,
-          patient.IdentificacionPaciente,
-          resetToken,
-        );
-      }
     }
 
     return json({
@@ -104,8 +67,7 @@ export const POST: RequestHandler = async ({
       message:
         "Si los datos coinciden con una cuenta registrada, recibirás un enlace de recuperación en tu correo.",
     });
-  } catch (error: any) {
-    console.error("❌ [Forgot Password Error]:", error.message);
+  } catch (error) {
     return json({
       success: true,
       message:
