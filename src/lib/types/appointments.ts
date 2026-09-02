@@ -46,3 +46,61 @@ export interface DocumentTypeOption {
   value: string;
   label: string;
 }
+
+export interface RawVenueApi {
+  IdSede?: number;
+  idSede?: number;
+  NombreSede?: string;
+  nombreSede?: string;
+}
+
+export interface RawServiceApi {
+  IdServicio?: number;
+  idServicio?: number;
+  NombreServicio?: string;
+  nombreServicio?: string;
+  Nombre?: string;
+}
+
+export interface RawActivityApi {
+  IdActividad?: number;
+  idActividad?: number;
+  IdServicio?: number | null;
+  idServicio?: number | null;
+  NombreActividad?: string;
+  nombreActividad?: string;
+}
+
+export interface RawAppointmentApi {
+  ClaveCita?: number;
+  claveCita?: number;
+  NombreActividad?: string;
+  nombreActividad?: string;
+  NombreProfesional?: string;
+  nombreProfesional?: string;
+  FechaCita?: string;
+  fechaCita?: string;
+  HoraCita?: string;
+  horaCita?: string;
+  NombreSede?: string;
+  nombreSede?: string;
+  EstadoServicio?: string;
+  estadoServicio?: string;
+}
+
+export interface RawSlotApi {
+  ClaveCita?: number;
+  claveCita?: number;
+  FechaCita?: string;
+  fechaCita?: string;
+  HoraCita?: string;
+  horaCita?: string;
+  NombreSede?: string;
+  nombreSede?: string;
+  NombreProfesional?: string;
+  nombreProfesional?: string;
+  DireccionSede?: string;
+  direccionSede?: string;
+  IdProfesional?: number;
+  idProfesional?: number;
+}
