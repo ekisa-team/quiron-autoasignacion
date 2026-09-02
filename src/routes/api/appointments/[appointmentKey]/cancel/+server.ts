@@ -1,11 +1,14 @@
-import { executeProcedure } from "$lib/server/db";
+import { apiDelete } from "$lib/server/api";
 import { json, type RequestHandler } from "@sveltejs/kit";
-import mssql from "mssql";
 
-export const PUT: RequestHandler = async ({ params, locals }) => {
+interface CancelApiResponse {
+  status?: string;
+  message?: string;
+}
+
+export const PUT: RequestHandler = async ({ params }) => {
   try {
-    const appointmentKey = Number(params.appointmentKey);
-    const clientId = locals.clientId || 67;
+    const appointmentKey = String(params.appointmentKey);
 
     if (!appointmentKey) {
       return json(
@@ -14,13 +17,19 @@ export const PUT: RequestHandler = async ({ params, locals }) => {
       );
     }
 
-    await executeProcedure(clientId, "Proc_Aut_CancelarCita", {
-      ClaveCita: { type: mssql.Int, value: appointmentKey },
-    });
+    const result = await apiDelete<CancelApiResponse>(
+      `/citas/${appointmentKey}`,
+    );
+
+    if (!result.ok) {
+      return json(
+        { success: false, message: "Error al cancelar la cita" },
+        { status: 500 },
+      );
+    }
 
     return json({ success: true, message: "Cita cancelada correctamente" });
-  } catch (error) {
-    console.error("[API Cancel Appointment Error]:", error);
+  } catch {
     return json(
       { success: false, message: "Error al cancelar la cita" },
       { status: 500 },
