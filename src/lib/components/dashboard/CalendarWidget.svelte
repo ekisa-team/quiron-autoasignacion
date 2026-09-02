@@ -60,12 +60,12 @@
         <div class="relative flex size-full items-center justify-center">
           <CalendarDay
             class={hasAvailability && !outsideMonth
-              ? "font-bold text-[#0e7490] ring-1.5 ring-[#3c8ea5] bg-cyan-50/50"
+              ? "font-bold text-[#0e7490] ring-1.5 ring-[#3c8ea5] bg-cyan-50/70"
               : ""}
           />
           {#if hasAvailability && !outsideMonth}
             <span
-              class="absolute bottom-0.5 size-1 rounded-full bg-[#3c8ea5] pointer-events-none"
+              class="absolute bottom-1 size-1 rounded-full bg-[#3c8ea5] pointer-events-none focus:bg-[#86cfe4]"
             ></span>
           {/if}
         </div>

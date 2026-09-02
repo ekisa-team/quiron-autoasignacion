@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { env } from "$env/dynamic/public";
   let {
-    sitekey = "1x00000000000000000000AA",
+    sitekey = env.PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA",
     oncallback,
   }: {
     sitekey?: string;
