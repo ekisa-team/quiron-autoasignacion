@@ -1,3 +1,5 @@
+import type { TenantConfig } from "$lib/types/tenant";
+
 declare global {
   namespace App {
     interface Locals {
@@ -12,6 +14,11 @@ declare global {
         emailVerified: boolean;
       } | null;
       clientId: number;
+      tenant?: TenantConfig;
+    }
+    interface PageData {
+      tenant?: TenantConfig;
+      tenantCss?: string;
     }
   }
 }
