@@ -1,0 +1,23 @@
+services:
+  valkey:
+    image: valkey/valkey:9-alpine
+    container_name: quiron-autoasignacion-valkey
+    restart: unless-stopped
+    command: >
+      valkey-server
+        --appendonly yes
+        --appendfsync everysec
+        --save 60 1000
+        --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  valkey-data:
