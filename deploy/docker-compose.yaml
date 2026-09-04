@@ -47,18 +47,21 @@ services:
     networks:
       - quiron-net
 
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: watchtower-autoasignacion
-    restart: unless-stopped
+  hclapi:
+    image: ghcr.io/ju4n97/hclapi:latest
+    ports:
+      - "8080:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app:ro
+    command: ["serve", "-c", "/app", "--host", "0.0.0.0", "--port", "8080"]
     environment:
-      - WATCHTOWER_POLL_INTERVAL=300
-      - WATCHTOWER_LABEL_ENABLE=true
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_MONITOR_ONLY=false
-      - WATCHTOWER_LOG_LEVEL=info
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/hclapi_db?sslmode=disable
+      - REDIS_URL=redis://valkey:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_started
 
 networks:
   quiron-net:

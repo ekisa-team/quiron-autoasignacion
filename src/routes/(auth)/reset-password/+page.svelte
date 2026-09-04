@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import * as Field from "$lib/components/ui/field";
@@ -58,7 +59,7 @@
           "Contraseña restablecida con éxito. Ya puedes iniciar sesión.",
         );
         setTimeout(() => {
-          window.location.href = `/login?c=${data.clientId}`;
+          goto(`/login?c=${data.clientId}`);
         }, 1200);
       } else {
         toast.error(result.message || "Token inválido o expirado");

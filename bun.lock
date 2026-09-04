@@ -20,6 +20,7 @@
         "@sveltejs/kit": "^2.63.0",
         "@sveltejs/vite-plugin-svelte": "^7.1.2",
         "@tailwindcss/vite": "^4.3.0",
+        "@types/cloudflare-turnstile": "^0.2.2",
         "@types/ioredis": "^5.0.0",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/mssql": "^12.3.0",
@@ -257,6 +258,8 @@
     "@tailwindcss/vite": ["@tailwindcss/vite@4.3.3", "", { "dependencies": { "@tailwindcss/node": "4.3.3", "@tailwindcss/oxide": "4.3.3", "tailwindcss": "4.3.3" }, "peerDependencies": { "vite": "^5.2.0 || ^6 || ^7 || ^8" } }, "sha512-yYU8cogLeSh/ms2jh8Fj7jaba/EWa7Ja6GoUqYZaraEuCI5YS6ms6ObZgjjedm+jm6XZjdNRWBpPP6Z86oOxcw=="],
 
     "@tediousjs/connection-string": ["@tediousjs/connection-string@1.1.0", "", {}, "sha512-z9ZBWEG+8pIB5V1zYzlRPXx0oRJ5H7coPnMQK8EZOw03UTPI9Umn6viL36f5w+CuqkKsnCM50RVStpjZmR0Bng=="],
+
+    "@types/cloudflare-turnstile": ["@types/cloudflare-turnstile@0.2.2", "", {}, "sha512-3Yf7b1Glci+V2bFWwWBbZkRgTuegp7RDgNTOG4U0UNPB9RV4AWvwqg2/qqLff8G+SwKFNXoXvTkqaRBZrAFdKA=="],
 
     "@types/cookie": ["@types/cookie@0.6.0", "", {}, "sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA=="],
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import ChangePasswordModal from "$lib/components/dashboard/ChangePasswordModal.svelte";
   import type { Snippet } from "svelte";
   import IconChevronDown from "~icons/lucide/chevron-down";
@@ -14,7 +15,7 @@
   async function handleLogout() {
     const currentClient = data?.clientId || 67;
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = `/login?c=${currentClient}`;
+    goto(`/login?c=${currentClient}`);
   }
 </script>
 

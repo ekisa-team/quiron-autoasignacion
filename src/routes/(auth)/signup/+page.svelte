@@ -1,5 +1,6 @@
 <script lang="ts">
-  import Turnstile from "$lib/components/Turnstile.svelte";
+  import { goto } from "$app/navigation";
+  import { createTurnstile } from "$lib/attachments/turnstile.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Calendar } from "$lib/components/ui/calendar";
   import * as Card from "$lib/components/ui/card";
@@ -42,6 +43,15 @@
   let birthDateInput = $state("");
   let birthDateValue = $state<DateValue | undefined>(undefined);
   let calendarPlaceholder = $state<DateValue>(new CalendarDate(2000, 1, 1));
+  let turnstileToken = $state("");
+  let resetCounter = $state(0);
+
+  const turnstileAttachment = createTurnstile({
+    onToken: (token) => {
+      turnstileToken = token;
+    },
+    resetTrigger: () => resetCounter,
+  });
 
   function isValidDate(d: number, m: number, y: number): boolean {
     if (isNaN(d) || isNaN(m) || isNaN(y)) return false;
@@ -90,7 +100,6 @@
   let email = $state("");
   let password = $state("");
   let confirmPassword = $state("");
-  let captchaToken = $state("");
   let isLoading = $state(false);
   let errors = $state<Record<string, string>>({});
   let submitted = $state(false);
@@ -218,7 +227,7 @@
           celular: mobile,
           email,
           password,
-          captchaToken,
+          turnstileToken,
         }),
       });
       const result = await res.json();
@@ -226,12 +235,16 @@
         toast.success(
           "Registro exitoso. Se ha enviado un correo de verificación.",
         );
-        window.location.href = "/register-confirmation";
+        goto("/register-confirmation");
       } else {
         toast.error(result.message || "Error al registrar el paciente");
+        turnstileToken = "";
+        resetCounter++;
       }
     } catch (error) {
       toast.error("Error de conexión con el servidor");
+      turnstileToken = "";
+      resetCounter++;
     } finally {
       isLoading = false;
     }
@@ -800,7 +813,7 @@
         </div>
       </div>
 
-      <Turnstile oncallback={(token) => (captchaToken = token)} />
+      <div {@attach turnstileAttachment}></div>
 
       <div class="pt-2 flex flex-col sm:flex-row justify-center gap-4 w-full">
         <Button

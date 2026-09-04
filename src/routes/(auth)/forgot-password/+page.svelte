@@ -1,5 +1,6 @@
 <script lang="ts">
-  import Turnstile from "$lib/components/Turnstile.svelte";
+  import { goto } from "$app/navigation";
+  import { createTurnstile } from "$lib/attachments/turnstile.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import * as Field from "$lib/components/ui/field";
@@ -17,7 +18,6 @@
   let documentType = $state("");
   let documentNumber = $state("");
   let email = $state("");
-  let captchaToken = $state("");
   let isLoading = $state(false);
   let errors = $state<{
     documentType?: string;
@@ -25,6 +25,15 @@
     email?: string;
   }>({});
   let submitted = $state(false);
+  let turnstileToken = $state("");
+  let resetCounter = $state(0);
+
+  const turnstileAttachment = createTurnstile({
+    onToken: (token) => {
+      turnstileToken = token;
+    },
+    resetTrigger: () => resetCounter,
+  });
 
   const documentTypes = $derived(data.documentTypes || []);
   const selectedDocLabel = $derived(
@@ -63,15 +72,17 @@
           documentType,
           identification: documentNumber,
           email,
-          captchaToken,
+          turnstileToken,
           clientId: data.clientId,
         }),
       });
       const result = await res.json();
       toast.success(result.message);
-      window.location.href = `/forgot-password-confirmation?c=${data.clientId}`;
+      goto(`/forgot-password-confirmation?c=${data.clientId}`);
     } catch (err) {
       toast.error("Error de conexión con el servidor");
+      turnstileToken = "";
+      resetCounter++;
     } finally {
       isLoading = false;
     }
@@ -200,7 +211,7 @@
         </Field.Group>
       </Field.Set>
 
-      <Turnstile oncallback={(token) => (captchaToken = token)} />
+      <div {@attach turnstileAttachment}></div>
 
       <div class="pt-2 space-y-2">
         <Button

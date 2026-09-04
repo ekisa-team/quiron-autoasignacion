@@ -20,6 +20,7 @@
     "@sveltejs/kit": "^2.63.0",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/vite": "^4.3.0",
+    "@types/cloudflare-turnstile": "^0.2.2",
     "@types/ioredis": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/mssql": "^12.3.0",

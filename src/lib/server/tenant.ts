@@ -39,7 +39,7 @@ async function fetchTenantFromDatabase(
           tenantIdentifier: row.TenantIdentifier,
         };
       } catch {
-        return null;
+        return row as unknown as TenantConfig;
       }
     }
 

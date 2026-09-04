@@ -1,3 +1,5 @@
+/// <reference types="@types/cloudflare-turnstile" />
+
 import type { TenantConfig } from "$lib/types/tenant";
 
 declare global {
@@ -20,6 +22,10 @@ declare global {
       tenant?: TenantConfig;
       tenantCss?: string;
     }
+  }
+
+  interface Window {
+    turnstile: typeof turnstile;
   }
 }
 

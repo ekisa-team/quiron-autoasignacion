@@ -1,5 +1,6 @@
 <script lang="ts">
-  import Turnstile from "$lib/components/Turnstile.svelte";
+  import { goto } from "$app/navigation";
+  import { createTurnstile } from "$lib/attachments/turnstile.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import * as Field from "$lib/components/ui/field";
@@ -16,7 +17,6 @@
   let documentType = $state("");
   let documentNumber = $state("");
   let password = $state("");
-  let captchaToken = $state("");
   let isLoading = $state(false);
   let errors = $state<{
     documentType?: string;
@@ -24,6 +24,15 @@
     password?: string;
   }>({});
   let submitted = $state(false);
+  let turnstileToken = $state("");
+  let resetCounter = $state(0);
+
+  const turnstileAttachment = createTurnstile({
+    onToken: (token) => {
+      turnstileToken = token;
+    },
+    resetTrigger: () => resetCounter,
+  });
 
   const documentTypes = $derived(data.documentTypes || []);
   const selectedDocLabel = $derived(
@@ -56,24 +65,30 @@
           identification: documentNumber,
           password,
           documentType,
-          captchaToken,
+          turnstileToken,
           clientId: data.clientId,
         }),
       });
       const result = await res.json();
       if (result.success) {
         toast.success("Inicio de sesión exitoso");
-        window.location.href = "/";
+        goto("/");
       } else if (result.notRegistered) {
         toast.warning(result.message);
         setTimeout(() => {
-          window.location.href = `/signup?c=${data.clientId || 67}&doc=${encodeURIComponent(documentNumber)}&docType=${encodeURIComponent(documentType)}&fromLogin=true`;
+          goto(
+            `/signup?c=${data.clientId || 67}&doc=${encodeURIComponent(documentNumber)}&docType=${encodeURIComponent(documentType)}&fromLogin=true`,
+          );
         }, 1500);
       } else {
         toast.error(result.message || "Credenciales incorrectas");
+        turnstileToken = "";
+        resetCounter++;
       }
     } catch (error) {
       toast.error("Error de conexión con el servidor");
+      turnstileToken = "";
+      resetCounter++;
     } finally {
       isLoading = false;
     }
@@ -219,7 +234,7 @@
         </a>
       </div>
 
-      <Turnstile oncallback={(token) => (captchaToken = token)} />
+      <div {@attach turnstileAttachment} class=" flex justify-center"></div>
 
       <Button
         type="submit"
