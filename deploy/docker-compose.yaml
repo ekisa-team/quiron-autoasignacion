@@ -1,0 +1,70 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-autoasignacion
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - quiron-net
+
+  quiron-autoasignacion-app:
+    image: ghcr.io/ekisa-team/quiron-autoasignacion/app:latest
+    container_name: quiron-autoasignacion-app
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DATABASE_MASTER_URL=${DATABASE_MASTER_URL}
+      - VALKEY_URL=valkey://quiron-valkey:6379
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - PUBLIC_TURNSTILE_SITE_KEY=${PUBLIC_TURNSTILE_SITE_KEY}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
+    networks:
+      - quiron-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    depends_on:
+      - quiron-valkey
+
+  quiron-valkey:
+    image: valkey/valkey:9-alpine
+    container_name: quiron-valkey
+    restart: unless-stopped
+    command: >
+      valkey-server
+        --appendonly yes
+        --appendfsync everysec
+        --save 60 1000
+        --loglevel warning
+    volumes:
+      - valkey-data:/data
+    networks:
+      - quiron-net
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower-autoasignacion
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_MONITOR_ONLY=false
+      - WATCHTOWER_LOG_LEVEL=info
+
+networks:
+  quiron-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  valkey-data:
