@@ -13,7 +13,7 @@
 <Card.Root class="w-md border-0 bg-white p-8 shadow-2xl text-center rounded-lg">
   {#if isValid}
     <div
-      class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#3c8ea5] text-white shadow-sm"
+      class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
     >
       <IconBadgeCheck class="size-8" />
     </div>
@@ -26,7 +26,7 @@
     </p>
     <Button
       href="/login"
-      class="h-9 px-6 text-[14px] font-medium bg-[#3c8ea5] hover:bg-[#0e7490] text-white rounded-[3px] shadow-none w-full sm:w-auto"
+      class="h-9 px-6 text-[14px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-[3px] shadow-none w-full sm:w-auto"
     >
       <IconLogIn class="mr-2 size-4" /> Iniciar sesión
     </Button>

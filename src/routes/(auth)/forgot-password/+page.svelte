@@ -10,18 +10,15 @@
   import IconIdCard from "~icons/lucide/id-card";
   import IconMail from "~icons/lucide/mail";
   import IconUser from "~icons/lucide/user";
+  import type { PageData } from "./$types";
 
-  let {
-    data,
-  }: { data: { documentTypes?: DocumentTypeOption[]; clientId?: number } } =
-    $props();
+  let { data }: { data: PageData } = $props();
 
   let documentType = $state("");
   let documentNumber = $state("");
   let email = $state("");
   let captchaToken = $state("");
   let isLoading = $state(false);
-
   let errors = $state<{
     documentType?: string;
     documentNumber?: string;
@@ -31,7 +28,8 @@
 
   const documentTypes = $derived(data.documentTypes || []);
   const selectedDocLabel = $derived(
-    documentTypes.find((d) => d.value === documentType)?.label,
+    documentTypes.find((d: DocumentTypeOption) => d.value === documentType)
+      ?.label,
   );
 
   function validateForm(): boolean {
@@ -51,14 +49,12 @@
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     submitted = true;
-
     if (!validateForm()) {
       toast.error("Por favor completa todos los campos requeridos");
       return;
     }
 
     isLoading = true;
-
     try {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
@@ -71,7 +67,6 @@
           clientId: data.clientId,
         }),
       });
-
       const result = await res.json();
       toast.success(result.message);
       window.location.href = `/forgot-password-confirmation?c=${data.clientId}`;
@@ -86,12 +81,12 @@
 <Card.Root class="w-full max-w-md border-0 bg-white p-8 shadow-2xl rounded-lg">
   <Card.Header class="mb-5 p-0">
     <div
-      class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#3c8ea5] text-white shadow-sm"
+      class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
     >
       <IconMail class="size-8" />
     </div>
     <div>
-      <h1 class="text-[28px] font-bold text-[#3c8ea5]">Recuperar clave</h1>
+      <h1 class="text-[28px] font-bold text-primary">Recuperar clave</h1>
       <p class="text-[13px] text-slate-500 mt-1 leading-snug">
         Ingresa tu documento y correo registrado para verificar tu identidad
       </p>
@@ -211,7 +206,7 @@
         <Button
           type="submit"
           disabled={isLoading}
-          class="h-9 w-full text-[14px] font-medium bg-[#3c8ea5] hover:bg-[#0e7490] text-white rounded-[3px] shadow-none"
+          class="h-9 w-full text-[14px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-[3px] shadow-none"
         >
           {isLoading
             ? "Validando y enviando..."

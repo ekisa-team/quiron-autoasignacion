@@ -6,8 +6,9 @@
   import { toast } from "svelte-sonner";
   import IconKey from "~icons/lucide/key";
   import IconKeyRound from "~icons/lucide/key-round";
+  import type { PageData } from "./$types";
 
-  let { data } = $props();
+  let { data }: { data: PageData } = $props();
 
   let password = $state("");
   let confirmPassword = $state("");
@@ -27,7 +28,6 @@
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     submitted = true;
-
     if (!password || password.length < 6) {
       toast.error("La contraseña debe tener mínimo 6 caracteres");
       return;
@@ -42,7 +42,6 @@
     }
 
     isLoading = true;
-
     try {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
@@ -53,7 +52,6 @@
           clientId: Number(data.clientId),
         }),
       });
-
       const result = await res.json();
       if (result.success) {
         toast.success(
@@ -76,12 +74,12 @@
 <Card.Root class="w-full max-w-md border-0 bg-white p-8 shadow-2xl rounded-lg">
   <Card.Header class="mb-5 p-0">
     <div
-      class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#3c8ea5] text-white shadow-sm"
+      class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
     >
       <IconKey class="size-8" />
     </div>
     <div>
-      <h1 class="text-[28px] font-bold text-[#3c8ea5]">Nueva contraseña</h1>
+      <h1 class="text-[28px] font-bold text-primary">Nueva contraseña</h1>
       <p class="text-[13px] text-slate-500 mt-1 leading-snug">
         {#if data.identification}
           Asigna una nueva clave para el documento: <strong
@@ -180,7 +178,7 @@
         <Button
           type="submit"
           disabled={isLoading || !data.token || !isFormValid}
-          class="h-9 w-full text-[14px] font-medium bg-[#3c8ea5] hover:bg-[#0e7490] text-white rounded-[3px] shadow-none disabled:opacity-50"
+          class="h-9 w-full text-[14px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-[3px] shadow-none disabled:opacity-50"
         >
           {isLoading ? "Guardando..." : "Guardar nueva contraseña"}
         </Button>

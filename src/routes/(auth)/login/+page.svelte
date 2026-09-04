@@ -5,23 +5,19 @@
   import * as Field from "$lib/components/ui/field";
   import * as InputGroup from "$lib/components/ui/input-group";
   import * as Select from "$lib/components/ui/select";
-  import type { DocumentTypeOption } from "$lib/types/appointments";
   import { toast } from "svelte-sonner";
   import IconIdCard from "~icons/lucide/id-card";
   import IconKey from "~icons/lucide/key";
   import IconUser from "~icons/lucide/user";
+  import type { PageData } from "./$types";
 
-  let {
-    data,
-  }: { data: { documentTypes?: DocumentTypeOption[]; clientId?: number } } =
-    $props();
+  let { data }: { data: PageData } = $props();
 
   let documentType = $state("");
   let documentNumber = $state("");
   let password = $state("");
   let captchaToken = $state("");
   let isLoading = $state(false);
-
   let errors = $state<{
     documentType?: string;
     documentNumber?: string;
@@ -47,12 +43,10 @@
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     submitted = true;
-
     if (!validateForm()) {
       toast.error("Por favor completa los campos requeridos");
       return;
     }
-
     isLoading = true;
     try {
       const res = await fetch("/api/auth/login", {
@@ -66,7 +60,6 @@
           clientId: data.clientId,
         }),
       });
-
       const result = await res.json();
       if (result.success) {
         toast.success("Inicio de sesión exitoso");
@@ -91,12 +84,12 @@
   <Card.Header class="mb-5 p-0">
     <div class="flex items-center gap-4">
       <img
-        src="/icons/svg/LogoQuiron.svg"
-        alt="Logo Quirón"
-        class="h-22 w-22 object-contain drop-shadow-sm"
+        src={data.tenant?.logoUrl || "/icons/svg/LogoQuiron.svg"}
+        alt={data.tenant?.name || "Logo Quirón"}
+        class="h-24 w-auto max-h-26 max-w-32 object-contain drop-shadow-sm shrink-0"
       />
       <div>
-        <h1 class="text-[28px] font-bold text-[#062e3a]">Bienvenido</h1>
+        <h1 class="text-[28px] font-bold text-slate-800">Bienvenido</h1>
         <p class="text-[13px] text-slate-500 mt-1 leading-snug">
           Ingresa tus credenciales para acceder al sistema
         </p>
@@ -214,13 +207,13 @@
       <div class="flex items-center justify-between text-[13px] pt-1">
         <a
           href="/signup?c={data.clientId || 67}"
-          class="text-slate-600 hover:text-[#0e7490] hover:underline"
+          class="text-slate-600 hover:text-primary hover:underline"
         >
-          ¿Primer ingreso? <strong class="text-[#3c8ea5]">Crear clave</strong>
+          ¿Primer ingreso? <strong class="text-primary">Crear clave</strong>
         </a>
         <a
           href="/forgot-password?c={data.clientId || 67}"
-          class="text-[#3c8ea5] hover:text-[#0e7490] hover:underline"
+          class="text-primary hover:underline"
         >
           ¿Olvidaste tu clave?
         </a>
@@ -231,7 +224,7 @@
       <Button
         type="submit"
         disabled={isLoading}
-        class="h-10 w-full text-[14px] font-medium bg-[#3c8ea5] hover:bg-[#0e7490] text-white rounded-[3px] shadow-none mt-2"
+        class="h-10 w-full text-[14px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-none mt-2"
       >
         {isLoading ? "Ingresando..." : "Ingresar"}
       </Button>
