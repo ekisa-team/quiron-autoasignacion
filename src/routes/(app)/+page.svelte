@@ -1,17 +1,12 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
-  import * as Tabs from "$lib/components/ui/tabs";
-  import type { DateValue } from "@internationalized/date";
-  import { getLocalTimeZone, today } from "@internationalized/date";
-  import { toast } from "svelte-sonner";
-
   import AppointmentsTable from "$lib/components/dashboard/AppointmentsTable.svelte";
   import AssignModal from "$lib/components/dashboard/AssignModal.svelte";
   import AvailabilityTable from "$lib/components/dashboard/AvailabilityTable.svelte";
   import CalendarWidget from "$lib/components/dashboard/CalendarWidget.svelte";
   import CancelModal from "$lib/components/dashboard/CancelModal.svelte";
   import PatientFilters from "$lib/components/dashboard/PatientFilters.svelte";
-
+  import { Button } from "$lib/components/ui/button";
+  import * as Tabs from "$lib/components/ui/tabs";
   import type {
     Appointment,
     AppointmentType,
@@ -21,7 +16,9 @@
     Venue,
   } from "$lib/types/appointments";
   import type { PatientUserSession } from "$lib/types/auth";
-
+  import type { DateValue } from "@internationalized/date";
+  import { getLocalTimeZone, today } from "@internationalized/date";
+  import { toast } from "svelte-sonner";
   import IconCalendar from "~icons/lucide/calendar";
   import IconCalendarDays from "~icons/lucide/calendar-days";
   import IconCalendarPlus from "~icons/lucide/calendar-plus";
@@ -32,6 +29,7 @@
   }: {
     data: {
       user: PatientUserSession | null;
+      tenant?: any;
       venues: Venue[];
       services: MedicalService[];
       activities: AppointmentType[];
@@ -47,7 +45,6 @@
   let activityId = $state("");
   let selectedDate = $state<DateValue | undefined>(today(getLocalTimeZone()));
   let isSearching = $state(false);
-
   let formErrors = $state<{
     venue?: string;
     service?: string;
@@ -85,8 +82,10 @@
 
   let showAssignModal = $state(false);
   let slotToAssign = $state<AvailabilitySlot | null>(null);
+
   let showCancelModal = $state(false);
   let appointmentToCancel = $state<Appointment | null>(null);
+
   let availableDates = $state<string[]>([]);
 
   $effect(() => {
@@ -109,6 +108,7 @@
   ) {
     if (type === "futuras") isLoadingFuture = true;
     else isLoadingPast = true;
+
     try {
       const res = await fetch(
         `/api/appointments/patient?type=${type}&page=${page}&pageSize=${size}`,
@@ -139,6 +139,7 @@
       toast.warning("Faltan datos por llenar");
       return;
     }
+
     isSearching = true;
     try {
       const res = await fetch("/api/appointments/availability", {
@@ -172,6 +173,7 @@
 
   async function confirmAssign() {
     if (!slotToAssign) return;
+
     try {
       const res = await fetch("/api/appointments/patient", {
         method: "POST",
@@ -201,6 +203,7 @@
 
   async function confirmCancel() {
     if (!appointmentToCancel) return;
+
     try {
       const res = await fetch(
         `/api/appointments/${appointmentToCancel.appointmentKey}/cancel`,
@@ -248,7 +251,6 @@
         onValidate={validateSearchForm}
       />
     </div>
-
     <div class="flex flex-col lg:col-span-4">
       <CalendarWidget
         bind:selectedDate
@@ -263,13 +265,12 @@
       <Button
         onclick={searchAvailability}
         disabled={isSearching}
-        class="h-10 w-full max-w-xs rounded-[3px] bg-[#3c8ea5] px-6 text-[14px] font-medium text-white shadow-none hover:bg-[#0e7490]"
+        class="h-10 w-full max-w-xs rounded-[3px] bg-primary px-6 text-[14px] font-medium text-primary-foreground shadow-none hover:bg-primary/90"
       >
         <IconCalendarPlus class="mr-2 size-5" />
         {isSearching ? "Buscando..." : "Asignar nueva cita"}
       </Button>
     </div>
-
     <div class="col-span-4 flex justify-start">
       <Button
         onclick={() => (currentTab = "futuras")}
@@ -289,20 +290,20 @@
         {#if currentTab !== "disponibilidad"}
           <Tabs.Trigger
             value="futuras"
-            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-[#3c8ea5] data-[state=active]:text-[#3c8ea5] data-[state=active]:shadow-none"
+            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
           >
             <IconCalendarDays class="mr-2 size-4" /> Citas futuras
           </Tabs.Trigger>
           <Tabs.Trigger
             value="anteriores"
-            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-[#3c8ea5] data-[state=active]:text-[#3c8ea5] data-[state=active]:shadow-none"
+            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
           >
             <IconCalendarSearch class="mr-2 size-4" /> Citas anteriores
           </Tabs.Trigger>
         {:else}
           <Tabs.Trigger
             value="disponibilidad"
-            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-[#3c8ea5] data-[state=active]:text-[#3c8ea5] data-[state=active]:shadow-none"
+            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
           >
             <IconCalendar class="mr-2 size-4" /> Disponibilidad
           </Tabs.Trigger>
@@ -328,7 +329,6 @@
             }}
           />
         </Tabs.Content>
-
         <Tabs.Content value="anteriores" class="mt-0">
           <AppointmentsTable
             appointments={pastAppointments}
@@ -341,7 +341,6 @@
             onPageChange={(p, s) => fetchAppointments("anteriores", p, s)}
           />
         </Tabs.Content>
-
         <Tabs.Content value="disponibilidad" class="mt-0">
           <AvailabilityTable
             slots={availabilitySlots}

@@ -43,7 +43,6 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
-
       const result = await res.json();
       if (result.success) {
         toast.success(result.message);
@@ -66,7 +65,7 @@
   >
     <AlertDialog.Header class="flex flex-col items-center text-center">
       <div
-        class="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#3c8ea5] text-white shadow-sm"
+        class="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
       >
         <IconKey class="size-7" />
       </div>
@@ -173,7 +172,7 @@
         <Button
           type="submit"
           disabled={isLoading || !isFormValid}
-          class="h-9 flex-1 bg-[#3c8ea5] hover:bg-[#0e7490] text-white rounded-[3px] text-[13px] shadow-none"
+          class="h-9 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-[3px] text-[13px] shadow-none"
         >
           {isLoading ? "Actualizando..." : "Actualizar contraseña"}
         </Button>

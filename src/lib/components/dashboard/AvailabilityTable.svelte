@@ -26,24 +26,25 @@
 </script>
 
 <Table.Root>
-  <Table.TableHeader class="bg-[#528ca2]">
+  <Table.TableHeader class="bg-primary">
     <Table.TableRow>
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Fecha</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Hora</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Sede</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Profesional/equipo</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Dirección</Table.TableHead
       >
-      <Table.TableHead class="text-right text-[13px] font-semibold text-white"
+      <Table.TableHead
+        class="text-right text-[13px] font-semibold text-primary-foreground"
         >Acción</Table.TableHead
       >
     </Table.TableRow>
@@ -54,7 +55,7 @@
         <Table.TableCell class="text-[13px] font-medium"
           >{formatDate(slot.appointmentDate)}</Table.TableCell
         >
-        <Table.TableCell class="text-[13px] font-medium text-[#0e7490]"
+        <Table.TableCell class="text-[13px] font-medium text-primary"
           >{formatTime(slot.appointmentTime)}</Table.TableCell
         >
         <Table.TableCell class="text-[13px] text-slate-600"
@@ -70,7 +71,7 @@
           <Button
             onclick={() => onAssignClick(slot)}
             size="sm"
-            class="h-7 bg-[#3c8ea5] hover:bg-[#0e7490] text-white text-xs rounded-[3px] shadow-none"
+            class="h-7 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded-[3px] shadow-none"
           >
             Asignar
           </Button>

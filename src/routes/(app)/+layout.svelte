@@ -1,7 +1,6 @@
 <script lang="ts">
   import ChangePasswordModal from "$lib/components/dashboard/ChangePasswordModal.svelte";
   import type { Snippet } from "svelte";
-
   import IconChevronDown from "~icons/lucide/chevron-down";
   import IconKey from "~icons/lucide/key";
   import IconLayers from "~icons/lucide/layers";
@@ -9,7 +8,6 @@
   import IconUserCircle from "~icons/lucide/user-circle";
 
   let { children, data }: { children: Snippet; data: any } = $props();
-
   let showPasswordModal = $state(false);
   let isMenuOpen = $state(false);
 
@@ -33,14 +31,24 @@
   <header
     class="sticky top-0 z-40 w-full border-b border-slate-200 bg-white shadow-sm"
   >
-    <div class="flex h-16 items-center justify-between px-4 sm:px-8">
-      <div class="flex items-center gap-3">
-        <div
-          class="flex h-10 w-10 items-center justify-center rounded-full bg-[#3c8ea5] text-white shadow-md"
-        >
-          <IconLayers class="size-5" />
-        </div>
-        <span class="text-xl font-semibold text-slate-700">Autoasignación</span>
+    <div class="flex h-18 items-center justify-between px-4 sm:px-8">
+      <div class="flex items-center gap-3.5">
+        {#if data?.tenant?.logoUrl}
+          <img
+            src={data.tenant.logoUrl}
+            alt={data.tenant.name || "Logo"}
+            class="h-12 w-auto max-h-14 max-w-48 object-contain drop-shadow-sm"
+          />
+        {:else}
+          <div
+            class="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md"
+          >
+            <IconLayers class="size-6" />
+          </div>
+        {/if}
+        <span class="text-xl font-semibold text-slate-700">
+          {data?.tenant?.name || "Autoasignación"}
+        </span>
       </div>
 
       <div class="relative" id="user-menu-container">
@@ -48,7 +56,7 @@
           onclick={() => (isMenuOpen = !isMenuOpen)}
           class="flex items-center gap-2 rounded px-3 py-1.5 text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer border border-slate-200"
         >
-          <IconUserCircle class="size-6 text-[#3c8ea5]" />
+          <IconUserCircle class="size-6 text-primary" />
           <span class="max-w-50 truncate text-[14px] font-medium">
             {data?.user?.fullName || "Paciente"}
           </span>
@@ -73,7 +81,6 @@
                 {data?.user?.fullName}
               </p>
             </div>
-
             <button
               onclick={() => {
                 isMenuOpen = false;
@@ -81,10 +88,9 @@
               }}
               class="flex w-full items-center gap-2 rounded px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 transition-colors text-left cursor-pointer"
             >
-              <IconKey class="size-4 text-[#3c8ea5]" />
+              <IconKey class="size-4 text-primary" />
               <span>Cambiar contraseña</span>
             </button>
-
             <button
               onclick={handleLogout}
               class="flex w-full items-center gap-2 rounded px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 transition-colors text-left cursor-pointer"

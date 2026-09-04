@@ -31,28 +31,28 @@
 </script>
 
 <Table.Root>
-  <Table.TableHeader class="bg-[#528ca2]">
+  <Table.TableHeader class="bg-primary">
     <Table.TableRow>
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Cita</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Profesional/equipo</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Fecha</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Hora</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Sede</Table.TableHead
       >
-      <Table.TableHead class="text-[13px] font-semibold text-white"
+      <Table.TableHead class="text-[13px] font-semibold text-primary-foreground"
         >Estado</Table.TableHead
       >
       {#if isFuture}<Table.TableHead
-          class="text-right text-[13px] font-semibold text-white"
+          class="text-right text-[13px] font-semibold text-primary-foreground"
           >Acciones</Table.TableHead
         >{/if}
     </Table.TableRow>
