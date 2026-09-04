@@ -6,10 +6,18 @@
 
   type Props = {
     children: Snippet;
+    data: any;
   };
-  let { children }: Props = $props();
+
+  let { children, data }: Props = $props();
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head>
+  <link rel="icon" href={favicon} />
+  {#if data.tenantCss}
+    {@html `<style id="tenant-theme">${data.tenantCss}</style>`}
+  {/if}
+</svelte:head>
+
 <Toaster position="top-center" richColors />
 {@render children()}

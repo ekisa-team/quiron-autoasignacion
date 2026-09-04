@@ -14,11 +14,13 @@ export const POST: RequestHandler = async ({
   request,
   locals,
   getClientAddress,
+  url,
 }) => {
   try {
     const body = await request.json();
     const { documentType, identification, email, captchaToken } = body;
     const clientId = Number(body.clientId) || locals.clientId || 67;
+    const tunnelUrl = locals.tenant?.hclapiUrl;
 
     if (captchaToken) {
       const isCaptchaValid = await verifyTurnstileToken(
@@ -51,6 +53,7 @@ export const POST: RequestHandler = async ({
         reset_token: resetToken,
         client_id: clientId,
       },
+      tunnelUrl,
     );
 
     if (result.ok && result.data?.email) {
@@ -59,6 +62,8 @@ export const POST: RequestHandler = async ({
         result.data.email,
         identification,
         resetToken,
+        url.origin,
+        tunnelUrl,
       );
     }
 
@@ -67,7 +72,7 @@ export const POST: RequestHandler = async ({
       message:
         "Si los datos coinciden con una cuenta registrada, recibirás un enlace de recuperación en tu correo.",
     });
-  } catch (error) {
+  } catch {
     return json({
       success: true,
       message:

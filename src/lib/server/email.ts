@@ -21,11 +21,15 @@ interface SmtpApiResponse {
   EmailNombreRemitente?: string;
 }
 
-async function getEmailConfig(clientId: number): Promise<EmailParams | null> {
+async function getEmailConfig(
+  clientId: number,
+  tunnelUrl?: string,
+): Promise<EmailParams | null> {
   try {
     const row = await apiGet<SmtpApiResponse>(
       "/configuracion/parametros-envio",
       { id_cliente: clientId },
+      tunnelUrl,
     );
 
     if (!row || !row.EmailUsuarioSmtp || !row.EmailPasswordSmtp) {
@@ -51,11 +55,11 @@ export async function sendEmail(
   to: string,
   subject: string,
   htmlBody: string,
+  tunnelUrl?: string,
 ): Promise<boolean> {
   try {
     if (!to || !to.trim()) return false;
-
-    const cfg = await getEmailConfig(clientId);
+    const cfg = await getEmailConfig(clientId, tunnelUrl);
     if (!cfg) return false;
 
     const transporter = nodemailer.createTransport({
@@ -90,10 +94,11 @@ export async function sendRegistrationVerificationEmail(
   fullName: string,
   identification: string,
   token: string,
+  originUrl?: string,
+  tunnelUrl?: string,
 ): Promise<boolean> {
-  const baseUrl = env.PUBLIC_BASE_URL || "http://localhost:5173";
+  const baseUrl = originUrl || env.PUBLIC_BASE_URL || "http://localhost:5173";
   const link = `${baseUrl}/verify-email?t=${token}&c=${clientId}&p=${identification}`;
-
   const body = `
 	<!DOCTYPE html>
 	<html lang="es">
@@ -143,8 +148,13 @@ export async function sendRegistrationVerificationEmail(
 	</body>
 	</html>
 	`;
-
-  return sendEmail(clientId, email, "Verificación de registro - Quirón", body);
+  return sendEmail(
+    clientId,
+    email,
+    "Verificación de registro - Quirón",
+    body,
+    tunnelUrl,
+  );
 }
 
 export async function sendPasswordResetEmail(
@@ -152,10 +162,11 @@ export async function sendPasswordResetEmail(
   email: string,
   identification: string,
   token: string,
+  originUrl?: string,
+  tunnelUrl?: string,
 ): Promise<boolean> {
-  const baseUrl = env.PUBLIC_BASE_URL || "http://localhost:5173";
+  const baseUrl = originUrl || env.PUBLIC_BASE_URL || "http://localhost:5173";
   const link = `${baseUrl}/reset-password?t=${token}&c=${clientId}&i=${identification}`;
-
   const body = `
 	<!DOCTYPE html>
 	<html lang="es">
@@ -210,13 +221,19 @@ export async function sendPasswordResetEmail(
 	</body>
 	</html>
 	`;
-
-  return sendEmail(clientId, email, "Restablecer contraseña - Quirón", body);
+  return sendEmail(
+    clientId,
+    email,
+    "Restablecer contraseña - Quirón",
+    body,
+    tunnelUrl,
+  );
 }
 
 export async function sendPasswordChangeNotification(
   clientId: number,
   email: string,
+  tunnelUrl?: string,
 ): Promise<boolean> {
   const body = `
 	<!DOCTYPE html>
@@ -265,11 +282,11 @@ export async function sendPasswordChangeNotification(
 	</body>
 	</html>
 	`;
-
   return sendEmail(
     clientId,
     email,
     "Notificación de cambio de contraseña - Quirón",
     body,
+    tunnelUrl,
   );
 }
