@@ -53,13 +53,14 @@
           clientId: Number(data.clientId),
         }),
       });
+
       const result = await res.json();
       if (result.success) {
         toast.success(
           "Contraseña restablecida con éxito. Ya puedes iniciar sesión.",
         );
         setTimeout(() => {
-          goto(`/login?c=${data.clientId}`);
+          goto(`/login`);
         }, 1200);
       } else {
         toast.error(result.message || "Token inválido o expirado");
@@ -80,7 +81,7 @@
       <IconKey class="size-8" />
     </div>
     <div>
-      <h1 class="text-[28px] font-bold text-primary">Nueva contraseña</h1>
+      <h1 class="text-[28px] font-bold text-slate-800">Nueva contraseña</h1>
       <p class="text-[13px] text-slate-500 mt-1 leading-snug">
         {#if data.identification}
           Asigna una nueva clave para el documento: <strong
@@ -179,7 +180,7 @@
         <Button
           type="submit"
           disabled={isLoading || !data.token || !isFormValid}
-          class="h-9 w-full text-[14px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-[3px] shadow-none disabled:opacity-50"
+          class="h-10 w-full text-[14px] font-medium shadow-none disabled:opacity-50"
         >
           {isLoading ? "Guardando..." : "Guardar nueva contraseña"}
         </Button>

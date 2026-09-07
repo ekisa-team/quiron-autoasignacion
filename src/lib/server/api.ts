@@ -1,13 +1,6 @@
 import { env } from "$env/dynamic/private";
-import { tenantContext } from "./tenant-context";
 
 const DEFAULT_BASE_URL = env.API_TUNNEL_URL || "http://localhost:8080/api/v1";
-
-function getEffectiveBaseUrl(explicitUrl?: string): string {
-  if (explicitUrl) return explicitUrl;
-  const store = tenantContext.getStore();
-  return store?.hclapiUrl || DEFAULT_BASE_URL;
-}
 
 export async function apiGet<T>(
   endpoint: string,
@@ -15,7 +8,7 @@ export async function apiGet<T>(
   baseUrl?: string,
 ): Promise<T | null> {
   try {
-    const root = getEffectiveBaseUrl(baseUrl);
+    const root = baseUrl || DEFAULT_BASE_URL;
     const url = new URL(
       `${root}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
     );
@@ -47,7 +40,7 @@ export async function apiPost<T, B = Record<string, unknown>>(
   baseUrl?: string,
 ): Promise<{ data: T | null; status: number; ok: boolean }> {
   try {
-    const root = getEffectiveBaseUrl(baseUrl);
+    const root = baseUrl || DEFAULT_BASE_URL;
     const res = await fetch(
       `${root}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
       {
@@ -76,7 +69,7 @@ export async function apiDelete<T>(
   baseUrl?: string,
 ): Promise<{ data: T | null; status: number; ok: boolean }> {
   try {
-    const root = getEffectiveBaseUrl(baseUrl);
+    const root = baseUrl || DEFAULT_BASE_URL;
     const res = await fetch(
       `${root}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
       {

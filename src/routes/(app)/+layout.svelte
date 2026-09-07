@@ -13,9 +13,8 @@
   let isMenuOpen = $state(false);
 
   async function handleLogout() {
-    const currentClient = data?.clientId || 67;
     await fetch("/api/auth/logout", { method: "POST" });
-    goto(`/login?c=${currentClient}`);
+    goto(`/login`);
   }
 </script>
 

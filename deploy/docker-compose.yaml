@@ -8,8 +8,8 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      - caddy-data:/data
+      - caddy-config:/config
     networks:
       - quiron-net
 
@@ -49,25 +49,26 @@ services:
 
   hclapi:
     image: ghcr.io/ju4n97/hclapi:latest
+    container_name: quiron-hclapi
+    restart: unless-stopped
     ports:
       - "8080:8080"
     volumes:
-      - .:/app:ro
+      - ../hclapi:/app:ro
     command: ["serve", "-c", "/app", "--host", "0.0.0.0", "--port", "8080"]
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/hclapi_db?sslmode=disable
-      - REDIS_URL=redis://valkey:6379/0
+      - DATABASE_URL=${DATABASE_URL}
+      - VALKEY_URL=valkey://quiron-valkey:6379
+    networks:
+      - quiron-net
     depends_on:
-      postgres:
-        condition: service_healthy
-      valkey:
-        condition: service_started
+      - quiron-valkey
 
 networks:
   quiron-net:
     driver: bridge
 
 volumes:
-  caddy_data:
-  caddy_config:
+  caddy-data:
+  caddy-config:
   valkey-data:

@@ -13,9 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   const clientId = locals.clientId || 67;
 
   try {
-    const docs = await apiGet<DocumentTypeApiRow[]>("/lookups/document-types", {
-      id_cliente: clientId,
-    });
+    const docs = await apiGet<DocumentTypeApiRow[]>("/lookups/document-types");
 
     const documentTypes: DocumentTypeOption[] = (docs || [])
       .map((d: DocumentTypeApiRow) => ({
