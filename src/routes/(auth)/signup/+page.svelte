@@ -208,6 +208,11 @@
       return;
     }
 
+    if (!turnstileToken) {
+      toast.error("Por favor completa la verificación de seguridad");
+      return;
+    }
+
     isLoading = true;
     try {
       const res = await fetch("/api/auth/register", {
@@ -230,6 +235,7 @@
           turnstileToken,
         }),
       });
+
       const result = await res.json();
       if (result.success) {
         toast.success(
@@ -286,7 +292,7 @@
           <p class="mt-0.5 text-slate-600">
             Completa el formulario para registrarte. Si cometiste una
             equivocación al escribir tu documento, <a
-              href="/login?c={data.clientId}"
+              href="/login"
               class="font-semibold text-primary hover:underline"
               >haz clic aquí para volver al inicio de sesión</a
             >.
@@ -403,7 +409,7 @@
               >
                 <Popover.Root bind:open={isDatePickerOpen}>
                   <Popover.Trigger
-                    class="border-r border-slate-300 bg-slate-50 hover:bg-primary text-slate-500 hover:text-primary-foreground w-9 p-0 flex items-center justify-center h-full m-0 shrink-0 cursor-pointer transition-colors"
+                    class="border-r border-slate-300 bg-slate-50 hover:bg-muted text-slate-500 w-9 p-0 flex items-center justify-center h-full m-0 shrink-0 cursor-pointer transition-colors"
                     title="Seleccionar fecha"
                   >
                     <IconCalendar class="size-4" />
@@ -581,15 +587,15 @@
                     id="genderSelect"
                     class="w-full h-full border-0 px-3 text-[13px] font-normal shadow-none focus:ring-0"
                   >
-                    {gender === "M" ? "Masculino" : "Femenino"}
+                    {data.biologicalSexes?.find((s) => s.value === gender)
+                      ?.label || "Seleccionar"}
                   </Select.Trigger>
                   <Select.Content>
-                    <Select.Item value="M" label="Masculino"
-                      >Masculino</Select.Item
-                    >
-                    <Select.Item value="F" label="Femenino"
-                      >Femenino</Select.Item
-                    >
+                    {#each data.biologicalSexes || [] as item}
+                      <Select.Item value={item.value} label={item.label}
+                        >{item.label}</Select.Item
+                      >
+                    {/each}
                   </Select.Content>
                 </Select.Root>
               </InputGroup.Root>
@@ -813,26 +819,30 @@
         </div>
       </div>
 
-      <div {@attach turnstileAttachment}></div>
+      <div {@attach turnstileAttachment} class="flex justify-center"></div>
 
-      <div class="pt-2 flex flex-col sm:flex-row justify-center gap-4 w-full">
-        <Button
-          type="submit"
-          disabled={isLoading}
-          class="h-10 w-full sm:w-auto sm:min-w-52.5 px-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-[3px] text-[14px] font-medium shadow-none"
-        >
-          <IconUserPlus class="mr-2 size-4.5" />
-          {isLoading ? "Procesando registro..." : "Registrarse"}
-        </Button>
-        <Button
-          type="button"
-          href="/login?c={data.clientId || 67}"
-          variant="secondary"
-          class="h-10 w-full sm:w-auto sm:min-w-45 px-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-[3px] text-[14px] font-medium shadow-none"
-        >
-          <IconArrowLeft class="mr-2 size-4.5" />
-          Regresar
-        </Button>
+      <div class="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <div class="flex sm:justify-end">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            class="h-10 w-full sm:max-w-xs px-6 text-[14px] font-medium shadow-none"
+          >
+            <IconUserPlus class="mr-2 size-4.5" />
+            {isLoading ? "Procesando registro..." : "Registrarse"}
+          </Button>
+        </div>
+        <div class="flex sm:justify-start">
+          <Button
+            type="button"
+            href="/login"
+            variant="secondary"
+            class="h-10 w-full sm:max-w-xs px-6 text-[14px] font-medium shadow-none"
+          >
+            <IconArrowLeft class="mr-2 size-4.5" />
+            Regresar
+          </Button>
+        </div>
       </div>
     </form>
   </Card.Content>

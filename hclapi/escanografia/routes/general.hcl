@@ -68,3 +68,23 @@ endpoint "GET /api/v1/lookups/document-types" {
     }
   }
 }
+
+endpoint "GET /api/v1/lookups/biological-sexes" {
+  description = "Consulta sexos biologicos."
+
+  pipeline {
+    sql "consultar_sexos" {
+      connection = connection.sqlserver.main
+      query      = <<-SQL
+        SELECT Codigo AS codigo, Nombre AS nombre 
+        FROM dbo.SexoBiologico 
+        ORDER BY Codigo ASC
+      SQL
+    }
+
+    respond {
+      status = 200
+      body   = steps.consultar_sexos.rows
+    }
+  }
+}

@@ -15,8 +15,8 @@ schema "registro_paciente_request" {
   }
 
   field "second_name" {
-    type     = string
-    default  = ""
+    type    = string
+    default = ""
   }
 
   field "first_last_name" {
@@ -25,8 +25,8 @@ schema "registro_paciente_request" {
   }
 
   field "second_last_name" {
-    type     = string
-    default  = ""
+    type    = string
+    default = ""
   }
 
   field "birth_date" {
@@ -35,18 +35,18 @@ schema "registro_paciente_request" {
   }
 
   field "gender" {
-    type     = string
-    default  = "M"
+    type    = string
+    default = "M"
   }
 
   field "address" {
-    type     = string
-    default  = ""
+    type    = string
+    default = ""
   }
 
   field "phone" {
-    type     = string
-    default  = ""
+    type    = string
+    default = ""
   }
 
   field "mobile" {
@@ -113,7 +113,7 @@ endpoint "POST /api/v1/pacientes/registro" {
 }
 
 endpoint "GET /api/v1/pacientes/{codigo_paciente}/citas" {
-  description = "Consulta el historial de citas de un paciente."
+  description = "Consulta el historial de citas paginado de un paciente."
 
   request {
     path {
@@ -127,16 +127,31 @@ endpoint "GET /api/v1/pacientes/{codigo_paciente}/citas" {
         type     = int
         required = true
       }
+      field "tipo" {
+        type    = string
+        default = "TODAS"
+      }
+      field "page" {
+        type    = int
+        default = 1
+      }
+      field "page_size" {
+        type    = int
+        default = 5
+      }
     }
   }
 
   pipeline {
     sql "consultar_citas_paciente" {
       connection = connection.sqlserver.main
-      query      = "EXEC dbo.Proc_Aut_ConsultarCitasPaciente @CodigoPaciente, @IdCliente"
+      query      = "EXEC dbo.Proc_Aut_ConsultarCitasPaciente @CodigoPaciente, @IdCliente, @TipoConsulta, @PageNumber, @PageSize"
       args = {
         CodigoPaciente = ctx.request.path.codigo_paciente
         IdCliente      = ctx.request.query.id_cliente
+        TipoConsulta   = ctx.request.query.tipo
+        PageNumber     = ctx.request.query.page
+        PageSize       = ctx.request.query.page_size
       }
     }
 

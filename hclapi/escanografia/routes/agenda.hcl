@@ -1,12 +1,11 @@
 endpoint "GET /api/v1/agenda" {
-  description = "Consulta la disponibilidad de cupos en agenda por fecha, sede, servicio o profesional."
+  description = "Consulta la disponibilidad de cupos en agenda por fecha paginada."
 
   request {
     query {
       field "fecha" {
-        type        = string
-        required    = true
-        description = "Fecha de consulta en formato YYYY-MM-DD"
+        type     = string
+        required = true
       }
       field "id_sede" {
         type     = int
@@ -28,13 +27,21 @@ endpoint "GET /api/v1/agenda" {
         type    = int
         default = 0
       }
+      field "page" {
+        type    = int
+        default = 1
+      }
+      field "page_size" {
+        type    = int
+        default = 50
+      }
     }
   }
 
   pipeline {
     sql "consultar_agenda" {
       connection = connection.sqlserver.main
-      query      = "EXEC dbo.Proc_Aut_AgendaCitas @FechaC, @IdSede, @IdCliente, @IdProfesional, @IdServicio, @IdActividad"
+      query      = "EXEC dbo.Proc_Aut_AgendaCitas @FechaC, @IdSede, @IdCliente, @IdProfesional, @IdServicio, @IdActividad, @PageNumber, @PageSize"
       args = {
         FechaC        = ctx.request.query.fecha
         IdSede        = ctx.request.query.id_sede
@@ -42,6 +49,8 @@ endpoint "GET /api/v1/agenda" {
         IdProfesional = ctx.request.query.id_profesional
         IdServicio    = ctx.request.query.id_servicio
         IdActividad   = ctx.request.query.id_actividad
+        PageNumber    = ctx.request.query.page
+        PageSize      = ctx.request.query.page_size
       }
     }
 
