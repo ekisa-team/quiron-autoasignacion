@@ -77,6 +77,8 @@
   });
 
   let availabilitySlots = $state<AvailabilitySlot[]>([]);
+  let totalRecordsAvailability = $state(0);
+  let totalPagesAvailability = $state(1);
   let pageSizeAvailability = $state("5");
   let pageAvailability = $state(1);
 
@@ -133,7 +135,10 @@
     }
   }
 
-  async function searchAvailability() {
+  async function searchAvailability(
+    pageNumber: number = 1,
+    size: string = pageSizeAvailability,
+  ) {
     formSubmitted = true;
     if (!validateSearchForm() || !selectedDate) {
       toast.warning("Faltan datos por llenar");
@@ -150,19 +155,18 @@
           idServicio: serviceId,
           idActividad: activityId,
           idSede: venueId,
+          page: pageNumber,
+          pageSize: Number(size),
         }),
       });
-      const rawSlots = await res.json();
-      availabilitySlots = (rawSlots || []).map((s: any) => ({
-        appointmentKey: s.ClaveCita ?? s.claveCita ?? 0,
-        appointmentDate: s.FechaCita ?? s.fechaCita ?? "",
-        appointmentTime: s.HoraCita ?? s.horaCita ?? "",
-        venueName: s.NombreSede ?? s.nombreSede ?? "",
-        professionalName: s.NombreProfesional ?? s.nombreProfesional ?? "",
-        venueAddress: s.DireccionSede ?? s.direccionSede ?? "",
-        professionalId: s.IdProfesional ?? s.idProfesional,
-      }));
-      pageAvailability = 1;
+      const json = await res.json();
+
+      availabilitySlots = json.items || [];
+      totalRecordsAvailability = json.totalRecords || 0;
+      totalPagesAvailability = json.totalPages || 1;
+      pageAvailability = json.page || 1;
+      pageSizeAvailability = size;
+
       currentTab = "disponibilidad";
     } catch {
       toast.error("Error al consultar agenda médica");
@@ -185,6 +189,11 @@
           idActividadCita: activityId,
           claveCita: slotToAssign.appointmentKey,
           idSede: venueId,
+          activityName:
+            data.activities?.find((a) => String(a.id) === activityId)?.name ||
+            "Consulta",
+          professionalName: slotToAssign.professionalName,
+          venueName: slotToAssign.venueName,
         }),
       });
       const result = await res.json();
@@ -207,7 +216,17 @@
     try {
       const res = await fetch(
         `/api/appointments/${appointmentToCancel.appointmentKey}/cancel`,
-        { method: "PUT" },
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            activityName: appointmentToCancel.activityName,
+            professionalName: appointmentToCancel.professionalName,
+            appointmentDate: appointmentToCancel.appointmentDate,
+            appointmentTime: appointmentToCancel.appointmentTime,
+            venueName: appointmentToCancel.venueName,
+          }),
+        },
       );
       const result = await res.json();
       if (result.success) {
@@ -263,7 +282,7 @@
   <section class="mt-6 grid gap-4 grid-cols-8 items-stretch">
     <div class="col-span-4 flex justify-end">
       <Button
-        onclick={searchAvailability}
+        onclick={() => searchAvailability(1, pageSizeAvailability)}
         disabled={isSearching}
         class="h-10 w-full max-w-xs rounded-[3px] bg-primary px-6 text-[14px] font-medium text-primary-foreground shadow-none hover:bg-primary/90"
       >
@@ -275,7 +294,7 @@
       <Button
         onclick={() => (currentTab = "futuras")}
         variant="secondary"
-        class="h-10 w-full max-w-xs rounded-[3px] bg-slate-200 px-6 text-[14px] font-medium text-slate-700 shadow-none hover:bg-slate-300"
+        class="h-10 w-full max-w-xs rounded-[3px] px-6 text-[14px] font-medium shadow-none"
       >
         <IconCalendarSearch class="mr-2 size-5" /> Mis citas
       </Button>
@@ -344,8 +363,12 @@
         <Tabs.Content value="disponibilidad" class="mt-0">
           <AvailabilityTable
             slots={availabilitySlots}
+            totalRecords={totalRecordsAvailability}
+            totalPages={totalPagesAvailability}
             bind:pageSize={pageSizeAvailability}
             bind:page={pageAvailability}
+            isLoading={isSearching}
+            onPageChange={(p, s) => searchAvailability(p, s)}
             onAssignClick={(slot: AvailabilitySlot) => {
               slotToAssign = slot;
               showAssignModal = true;

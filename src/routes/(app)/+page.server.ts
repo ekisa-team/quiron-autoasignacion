@@ -4,45 +4,11 @@ import type {
   AppointmentType,
   MedicalService,
   RawActivityApi,
-  RawAppointmentApi,
   RawServiceApi,
   RawVenueApi,
   Venue,
 } from "$lib/types/appointments";
 import type { PageServerLoad } from "./$types";
-
-function parseAppointmentDateTime(
-  dateStr: string | Date,
-  timeStr: string | Date,
-): Date {
-  let year = 2026,
-    month = 0,
-    day = 1;
-  if (typeof dateStr === "string") {
-    const [y, m, d] = dateStr.split("T")[0].split("-").map(Number);
-    year = y;
-    month = m - 1;
-    day = d;
-  } else if (dateStr instanceof Date) {
-    year = dateStr.getUTCFullYear();
-    month = dateStr.getUTCMonth();
-    day = dateStr.getUTCDate();
-  }
-
-  let hours = 0,
-    minutes = 0;
-  if (typeof timeStr === "string") {
-    const timePart = timeStr.includes("T") ? timeStr.split("T")[1] : timeStr;
-    const [h, min] = timePart.split(":").map(Number);
-    hours = h || 0;
-    minutes = min || 0;
-  } else if (timeStr instanceof Date) {
-    hours = timeStr.getUTCHours();
-    minutes = timeStr.getUTCMinutes();
-  }
-
-  return new Date(year, month, day, hours, minutes, 0);
-}
 
 interface HolidayApiRow {
   fechaCalendario?: string | Date;
@@ -52,6 +18,7 @@ interface HolidayApiRow {
 export const load: PageServerLoad = async ({ locals }) => {
   const clientId = locals.clientId || 67;
   const patientCode = Number(locals.user?.patientId) || 0;
+  const tunnelUrl = locals.tenant?.hclapiUrl;
 
   try {
     const [
@@ -59,20 +26,35 @@ export const load: PageServerLoad = async ({ locals }) => {
       servicesRes,
       activitiesRes,
       holidaysRes,
-      appointmentsRes,
+      futureRes,
+      pastRes,
     ] = await Promise.all([
-      apiGet<RawVenueApi[]>("/sedes", { id_cliente: clientId }),
-      apiGet<RawServiceApi[]>("/servicios", { id_cliente: clientId }),
-      apiGet<RawActivityApi[]>("/actividades", {
-        id_cliente: clientId,
-        id_servicio: 0,
-      }),
-      apiGet<HolidayApiRow[]>("/lookups/holidays"),
+      apiGet<RawVenueApi[]>("/sedes", { id_cliente: clientId }, tunnelUrl),
+      apiGet<RawServiceApi[]>(
+        "/servicios",
+        { id_cliente: clientId },
+        tunnelUrl,
+      ),
+      apiGet<RawActivityApi[]>(
+        "/actividades",
+        { id_cliente: clientId, id_servicio: 0 },
+        tunnelUrl,
+      ),
+      apiGet<HolidayApiRow[]>("/lookups/holidays", undefined, tunnelUrl),
       patientCode > 0
-        ? apiGet<RawAppointmentApi[]>(`/pacientes/${patientCode}/citas`, {
-            id_cliente: clientId,
-          })
-        : [],
+        ? apiGet<any[]>(
+            `/pacientes/${patientCode}/citas`,
+            { id_cliente: clientId, tipo: "FUTURAS", page: 1, page_size: 5 },
+            tunnelUrl,
+          )
+        : Promise.resolve([]),
+      patientCode > 0
+        ? apiGet<any[]>(
+            `/pacientes/${patientCode}/citas`,
+            { id_cliente: clientId, tipo: "ANTERIORES", page: 1, page_size: 5 },
+            tunnelUrl,
+          )
+        : Promise.resolve([]),
     ]);
 
     const venues: Venue[] = (venuesRes || []).map((s) => ({
@@ -100,54 +82,55 @@ export const load: PageServerLoad = async ({ locals }) => {
       })
       .filter((d): d is string => d !== null);
 
-    const now = new Date();
-    const allAppointments: Appointment[] = (appointmentsRes || []).map((c) => ({
-      appointmentKey: c.ClaveCita ?? c.claveCita ?? 0,
-      activityName: c.NombreActividad ?? c.nombreActividad ?? "",
-      professionalName: c.NombreProfesional ?? c.nombreProfesional ?? "",
-      appointmentDate: c.FechaCita ?? c.fechaCita ?? "",
-      appointmentTime: c.HoraCita ?? c.horaCita ?? "",
-      venueName: c.NombreSede ?? c.nombreSede ?? "",
-      status: (
-        c.EstadoServicio ??
-        c.estadoServicio ??
-        "ASIGNADA"
-      ).toUpperCase(),
-    }));
+    const mapAppointments = (raw: any[]): Appointment[] =>
+      (raw || []).map((c) => ({
+        appointmentKey: c.ClaveCita ?? c.claveCita ?? 0,
+        activityName: c.NombreActividad ?? c.nombreActividad ?? "",
+        professionalName: c.NombreProfesional ?? c.nombreProfesional ?? "",
+        appointmentDate: c.FechaCita ?? c.fechaCita ?? "",
+        appointmentTime: c.HoraCita ?? c.horaCita ?? "",
+        venueName: c.NombreSede ?? c.nombreSede ?? "",
+        status: (
+          c.EstadoServicio ??
+          c.estadoServicio ??
+          "ASIGNADA"
+        ).toUpperCase(),
+      }));
 
-    const allFuture = allAppointments.filter(
-      (c) =>
-        parseAppointmentDateTime(c.appointmentDate, c.appointmentTime) >= now,
-    );
-    const allPast = allAppointments.filter(
-      (c) =>
-        parseAppointmentDateTime(c.appointmentDate, c.appointmentTime) < now,
-    );
+    const futureItems = mapAppointments(futureRes || []);
+    const totalFuture =
+      futureRes && futureRes.length > 0 ? (futureRes[0].TotalRecords ?? 0) : 0;
+
+    const pastItems = mapAppointments(pastRes || []);
+    const totalPast =
+      pastRes && pastRes.length > 0 ? (pastRes[0].TotalRecords ?? 0) : 0;
 
     return {
       user: locals.user,
+      tenant: locals.tenant,
       venues,
       services,
       activities,
       holidays,
       futureAppointments: {
-        items: allFuture.slice(0, 5),
-        totalRecords: allFuture.length,
+        items: futureItems,
+        totalRecords: totalFuture,
         page: 1,
         pageSize: 5,
-        totalPages: Math.ceil(allFuture.length / 5) || 1,
+        totalPages: Math.ceil(totalFuture / 5) || 1,
       },
       pastAppointments: {
-        items: allPast.slice(0, 5),
-        totalRecords: allPast.length,
+        items: pastItems,
+        totalRecords: totalPast,
         page: 1,
         pageSize: 5,
-        totalPages: Math.ceil(allPast.length / 5) || 1,
+        totalPages: Math.ceil(totalPast / 5) || 1,
       },
     };
   } catch {
     return {
       user: locals.user,
+      tenant: locals.tenant,
       venues: [],
       services: [],
       activities: [],

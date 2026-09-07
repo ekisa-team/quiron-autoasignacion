@@ -9,20 +9,23 @@
 
   let {
     slots = [],
+    totalRecords = 0,
+    totalPages = 1,
     pageSize = $bindable("5"),
     page = $bindable(1),
+    isLoading = false,
+    onPageChange = () => {},
     onAssignClick = () => {},
   }: {
     slots: AvailabilitySlot[];
+    totalRecords: number;
+    totalPages: number;
     pageSize: string;
     page: number;
+    isLoading?: boolean;
+    onPageChange: (page: number, size: string) => void;
     onAssignClick: (slot: AvailabilitySlot) => void;
   } = $props();
-
-  const paginated = $derived(
-    slots.slice((page - 1) * Number(pageSize), page * Number(pageSize)),
-  );
-  const totalPages = $derived(Math.ceil(slots.length / Number(pageSize)) || 1);
 </script>
 
 <Table.Root>
@@ -50,47 +53,58 @@
     </Table.TableRow>
   </Table.TableHeader>
   <Table.TableBody>
-    {#each paginated as slot, index (`${slot.appointmentKey}-${index}`)}
-      <Table.TableRow class="hover:bg-slate-50">
-        <Table.TableCell class="text-[13px] font-medium"
-          >{formatDate(slot.appointmentDate)}</Table.TableCell
-        >
-        <Table.TableCell class="text-[13px] font-medium text-primary"
-          >{formatTime(slot.appointmentTime)}</Table.TableCell
-        >
-        <Table.TableCell class="text-[13px] text-slate-600"
-          >{slot.venueName}</Table.TableCell
-        >
-        <Table.TableCell class="text-[13px] text-slate-600"
-          >{slot.professionalName}</Table.TableCell
-        >
-        <Table.TableCell class="text-[13px] text-slate-600"
-          >{slot.venueAddress || ""}</Table.TableCell
-        >
-        <Table.TableCell class="text-right">
-          <Button
-            onclick={() => onAssignClick(slot)}
-            size="sm"
-            class="h-7 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded-[3px] shadow-none"
-          >
-            Asignar
-          </Button>
-        </Table.TableCell>
-      </Table.TableRow>
-    {:else}
+    {#if isLoading}
       <Table.TableRow>
         <Table.TableCell
           colspan={6}
           class="h-24 text-center text-slate-500 text-[13px]"
         >
-          No hay agenda disponible para los filtros seleccionados.
+          Buscando disponibilidad...
         </Table.TableCell>
       </Table.TableRow>
-    {/each}
+    {:else}
+      {#each slots as slot, index (`${slot.appointmentKey}-${index}`)}
+        <Table.TableRow class="hover:bg-slate-50">
+          <Table.TableCell class="text-[13px] font-medium"
+            >{formatDate(slot.appointmentDate)}</Table.TableCell
+          >
+          <Table.TableCell class="text-[13px] font-medium text-primary"
+            >{formatTime(slot.appointmentTime)}</Table.TableCell
+          >
+          <Table.TableCell class="text-[13px] text-slate-600"
+            >{slot.venueName}</Table.TableCell
+          >
+          <Table.TableCell class="text-[13px] text-slate-600"
+            >{slot.professionalName}</Table.TableCell
+          >
+          <Table.TableCell class="text-[13px] text-slate-600"
+            >{slot.venueAddress || ""}</Table.TableCell
+          >
+          <Table.TableCell class="text-right">
+            <Button
+              onclick={() => onAssignClick(slot)}
+              size="sm"
+              class="h-7 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded-[3px] shadow-none"
+            >
+              Asignar
+            </Button>
+          </Table.TableCell>
+        </Table.TableRow>
+      {:else}
+        <Table.TableRow>
+          <Table.TableCell
+            colspan={6}
+            class="h-24 text-center text-slate-500 text-[13px]"
+          >
+            No hay agenda disponible para los filtros seleccionados.
+          </Table.TableCell>
+        </Table.TableRow>
+      {/each}
+    {/if}
   </Table.TableBody>
 </Table.Root>
 
-{#if slots.length > 0}
+{#if totalRecords > 0}
   <div
     class="mt-4 flex flex-col items-center justify-between gap-3 border-t border-slate-200 p-3 text-[13px] text-slate-600 sm:flex-row"
   >
@@ -99,7 +113,7 @@
       <Select.Root
         type="single"
         bind:value={pageSize}
-        onValueChange={() => (page = 1)}
+        onValueChange={(val) => onPageChange(1, val)}
       >
         <Select.Trigger class="h-8 w-16 text-xs">{pageSize}</Select.Trigger>
         <Select.Content>
@@ -112,8 +126,8 @@
       <span
         >Mostrando {(page - 1) * Number(pageSize) + 1} a {Math.min(
           page * Number(pageSize),
-          slots.length,
-        )} de {slots.length} registros</span
+          totalRecords,
+        )} de {totalRecords} registros</span
       >
     </div>
     <div class="flex items-center gap-1">
@@ -121,8 +135,8 @@
         variant="outline"
         size="icon"
         class="h-8 w-8"
-        disabled={page <= 1}
-        onclick={() => page--}
+        disabled={page <= 1 || isLoading}
+        onclick={() => onPageChange(page - 1, pageSize)}
       >
         <IconChevronLeft class="size-4" />
       </Button>
@@ -131,8 +145,8 @@
         variant="outline"
         size="icon"
         class="h-8 w-8"
-        disabled={page >= totalPages}
-        onclick={() => page++}
+        disabled={page >= totalPages || isLoading}
+        onclick={() => onPageChange(page + 1, pageSize)}
       >
         <IconChevronRight class="size-4" />
       </Button>
