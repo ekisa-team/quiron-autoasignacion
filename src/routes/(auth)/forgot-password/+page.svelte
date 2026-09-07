@@ -63,6 +63,11 @@
       return;
     }
 
+    if (!turnstileToken) {
+      toast.error("Por favor completa la verificación de seguridad");
+      return;
+    }
+
     isLoading = true;
     try {
       const res = await fetch("/api/auth/forgot-password", {
@@ -76,9 +81,10 @@
           clientId: data.clientId,
         }),
       });
+
       const result = await res.json();
       toast.success(result.message);
-      goto(`/forgot-password-confirmation?c=${data.clientId}`);
+      goto(`/forgot-password-confirmation`);
     } catch (err) {
       toast.error("Error de conexión con el servidor");
       turnstileToken = "";
@@ -97,7 +103,7 @@
       <IconMail class="size-8" />
     </div>
     <div>
-      <h1 class="text-[28px] font-bold text-primary">Recuperar clave</h1>
+      <h1 class="text-[28px] font-bold text-slate-800">Recuperar clave</h1>
       <p class="text-[13px] text-slate-500 mt-1 leading-snug">
         Ingresa tu documento y correo registrado para verificar tu identidad
       </p>
@@ -211,13 +217,13 @@
         </Field.Group>
       </Field.Set>
 
-      <div {@attach turnstileAttachment}></div>
+      <div {@attach turnstileAttachment} class="flex justify-center"></div>
 
       <div class="pt-2 space-y-2">
         <Button
           type="submit"
           disabled={isLoading}
-          class="h-9 w-full text-[14px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-[3px] shadow-none"
+          class="h-10 w-full text-[14px] font-medium shadow-none"
         >
           {isLoading
             ? "Validando y enviando..."
@@ -225,8 +231,9 @@
         </Button>
         <Button
           type="button"
-          href="/login?c={data.clientId}"
-          class="h-9 w-full text-[14px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-[3px] shadow-none"
+          href="/login"
+          variant="secondary"
+          class="h-10 w-full text-[14px] font-medium shadow-none"
         >
           Regresar
         </Button>

@@ -18,21 +18,18 @@ export const POST: RequestHandler = async ({
 }) => {
   try {
     const body = await request.json();
-    const { documentType, identification, email, captchaToken } = body;
+    const { documentType, identification, email, turnstileToken } = body;
     const clientId = Number(body.clientId) || locals.clientId || 67;
     const tunnelUrl = locals.tenant?.hclapiUrl;
 
-    if (captchaToken) {
-      const isCaptchaValid = await verifyTurnstileToken(
-        captchaToken,
-        getClientAddress(),
+    if (
+      !turnstileToken ||
+      !(await verifyTurnstileToken(turnstileToken, getClientAddress()))
+    ) {
+      return json(
+        { success: false, message: "Verificación de seguridad fallida" },
+        { status: 400 },
       );
-      if (!isCaptchaValid) {
-        return json(
-          { success: false, message: "Verificación de seguridad fallida" },
-          { status: 400 },
-        );
-      }
     }
 
     if (!documentType || !identification || !email) {
@@ -57,14 +54,15 @@ export const POST: RequestHandler = async ({
     );
 
     if (result.ok && result.data?.email) {
-      await sendPasswordResetEmail(
+      sendPasswordResetEmail({
         clientId,
-        result.data.email,
+        email: result.data.email,
         identification,
-        resetToken,
-        url.origin,
+        token: resetToken,
+        originUrl: url.origin,
         tunnelUrl,
-      );
+        tenant: locals.tenant,
+      }).catch(() => {});
     }
 
     return json({

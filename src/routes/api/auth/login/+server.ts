@@ -1,14 +1,31 @@
 import { apiPost } from "$lib/server/api";
 import { generateAccessToken, generateRefreshToken } from "$lib/server/jwt";
 import { verifyPassword } from "$lib/server/password";
+import { verifyTurnstileToken } from "$lib/server/turnstile";
 import type { RawPatientLoginApi } from "$lib/types/auth";
 import { json, type RequestHandler } from "@sveltejs/kit";
 
-export const POST: RequestHandler = async ({ request, cookies, locals }) => {
+export const POST: RequestHandler = async ({
+  request,
+  cookies,
+  locals,
+  getClientAddress,
+}) => {
   try {
     const body = await request.json();
-    const { identification, password, documentType } = body;
+    const { identification, password, documentType, turnstileToken } = body;
     const clientId = Number(body.clientId) || locals.clientId || 67;
+    const tunnelUrl = locals.tenant?.hclapiUrl;
+
+    if (
+      !turnstileToken ||
+      !(await verifyTurnstileToken(turnstileToken, getClientAddress()))
+    ) {
+      return json(
+        { success: false, message: "Verificación de seguridad fallida" },
+        { status: 400 },
+      );
+    }
 
     if (!identification || !password || !documentType) {
       return json(
@@ -17,11 +34,15 @@ export const POST: RequestHandler = async ({ request, cookies, locals }) => {
       );
     }
 
-    const response = await apiPost<RawPatientLoginApi>("/auth/login", {
-      identificacion: String(identification).trim(),
-      codigo_tipo_documento: String(documentType).trim(),
-      id_cliente: clientId,
-    });
+    const response = await apiPost<RawPatientLoginApi>(
+      "/auth/login",
+      {
+        identificacion: String(identification).trim(),
+        codigo_tipo_documento: String(documentType).trim(),
+        id_cliente: clientId,
+      },
+      tunnelUrl,
+    );
 
     const user = response.data;
 
@@ -58,6 +79,7 @@ export const POST: RequestHandler = async ({ request, cookies, locals }) => {
         {
           usuario_id: user.UsuarioId,
         },
+        tunnelUrl,
       );
 
       if (failedRes.ok && failedRes.data) {
@@ -91,9 +113,13 @@ export const POST: RequestHandler = async ({ request, cookies, locals }) => {
       }
     }
 
-    await apiPost("/auth/login-exitoso", {
-      usuario_id: user.UsuarioId,
-    });
+    await apiPost(
+      "/auth/login-exitoso",
+      {
+        usuario_id: user.UsuarioId,
+      },
+      tunnelUrl,
+    );
 
     const fullName =
       `${user.Nombre1Paciente || ""} ${user.Nombre2Paciente || ""} ${user.Apellido1Paciente || ""} ${user.Apellido2Paciente || ""}`

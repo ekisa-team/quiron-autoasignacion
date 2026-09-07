@@ -56,6 +56,12 @@
       toast.error("Por favor completa los campos requeridos");
       return;
     }
+
+    if (!turnstileToken) {
+      toast.error("Por favor completa la verificación de seguridad");
+      return;
+    }
+
     isLoading = true;
     try {
       const res = await fetch("/api/auth/login", {
@@ -69,6 +75,7 @@
           clientId: data.clientId,
         }),
       });
+
       const result = await res.json();
       if (result.success) {
         toast.success("Inicio de sesión exitoso");
@@ -77,7 +84,7 @@
         toast.warning(result.message);
         setTimeout(() => {
           goto(
-            `/signup?c=${data.clientId || 67}&doc=${encodeURIComponent(documentNumber)}&docType=${encodeURIComponent(documentType)}&fromLogin=true`,
+            `/signup?doc=${encodeURIComponent(documentNumber)}&docType=${encodeURIComponent(documentType)}&fromLogin=true`,
           );
         }, 1500);
       } else {
@@ -204,7 +211,7 @@
               <InputGroup.Input
                 id="password"
                 type="password"
-                autocomplete="off"
+                autocomplete="new-password"
                 placeholder="Clave"
                 bind:value={password}
                 class="h-full border-0 text-[14px] placeholder:text-slate-500 focus-visible:ring-0 shadow-none px-3"
@@ -221,25 +228,22 @@
 
       <div class="flex items-center justify-between text-[13px] pt-1">
         <a
-          href="/signup?c={data.clientId || 67}"
+          href="/signup"
           class="text-slate-600 hover:text-primary hover:underline"
         >
           ¿Primer ingreso? <strong class="text-primary">Crear clave</strong>
         </a>
-        <a
-          href="/forgot-password?c={data.clientId || 67}"
-          class="text-primary hover:underline"
-        >
+        <a href="/forgot-password" class="text-primary hover:underline">
           ¿Olvidaste tu clave?
         </a>
       </div>
 
-      <div {@attach turnstileAttachment} class=" flex justify-center"></div>
+      <div {@attach turnstileAttachment} class="flex justify-center"></div>
 
       <Button
         type="submit"
         disabled={isLoading}
-        class="h-10 w-full text-[14px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-none mt-2"
+        class="h-10 w-full text-[14px] font-medium shadow-none mt-2"
       >
         {isLoading ? "Ingresando..." : "Ingresar"}
       </Button>
