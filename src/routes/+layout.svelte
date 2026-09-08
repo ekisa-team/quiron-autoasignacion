@@ -1,19 +1,15 @@
 <script lang="ts">
   import favicon from "$lib/assets/favicon.svg";
   import { Toaster } from "$lib/components/ui/sonner";
-  import type { Snippet } from "svelte";
+  import type { LayoutProps } from "./$types";
   import "./layout.css";
 
-  type Props = {
-    children: Snippet;
-    data: any;
-  };
-
-  let { children, data }: Props = $props();
+  let { children, data }: LayoutProps = $props();
 </script>
 
 <svelte:head>
-  <link rel="icon" href={favicon} />
+  <title>{data.tenant?.name || "Quirón Autoasignación"}</title>
+  <link rel="icon" href={data.tenant?.logoUrl || favicon} />
   {#if data.tenantCss}
     {@html `<style id="tenant-theme">${data.tenantCss}</style>`}
   {/if}
