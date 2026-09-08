@@ -26,23 +26,3 @@ endpoint "GET /health" {
     }
   }
 }
-
-endpoint "GET /docs" {
-  description = "Portal interactivo de documentación de la API."
-
-  openapi "ui" {
-    renderer = "elements"
-  }
-}
-
-endpoint "GET /openapi.json" {
-  openapi "spec" {
-    format = "json"
-  }
-}
-
-endpoint "GET /openapi.yaml" {
-  openapi "spec" {
-    format = "yaml"
-  }
-}
