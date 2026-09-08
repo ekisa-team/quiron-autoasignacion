@@ -98,13 +98,13 @@ jobs:
           generate_release_notes: true
           files: dist-hcl/*.tar.gz
           body: |
-            ## Distribución de Versión v${{ steps.version.outputs.version }}
+            ## Release v${{ steps.version.outputs.version }}
 
-            ### Imagen Docker
+            ### Docker Image
             ```bash
             docker pull ${{ env.APP_IMAGE }}:${{ steps.version.outputs.version }}
             docker pull ${{ env.APP_IMAGE }}:latest
             ```
 
-            ### Paquetes HCL
-            Las configuraciones para los túneles locales de cada clínica se encuentran adjuntas en los activos de este release.
+            ### Client HCL Packages
+            The updated HCL tunnel configuration packages for each clinic are attached below as downloadable assets.
