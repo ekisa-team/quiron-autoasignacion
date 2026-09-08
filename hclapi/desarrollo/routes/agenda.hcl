@@ -84,20 +84,11 @@ endpoint "GET /api/v1/agenda/fechas-disponibles" {
   pipeline {
     sql "consultar_fechas" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-      SELECT DISTINCT CONVERT(VARCHAR(10), Cit.FechaCita, 120) AS FechaDisponible 
-        FROM dbo.Cit_Agenda Cit 
-        WHERE (@IdSede = 0 OR Cit.IdSede = @IdSede) 
-          AND (@IdServicio = 0 OR Cit.IdServicio = @IdServicio) 
-          AND Cit.TipoCita = 'PRINCIPAL' 
-          AND Cit.EstadoCita = 'DISPONIBLE' 
-          AND Cit.IdCliente = @IdCliente 
-          AND Cit.FechaCita >= CONVERT(DATE, GETDATE())
-      SQL
+      query      = "EXEC dbo.Proc_Aut_ConsultarFechasDisponibles @IdCliente, @IdSede, @IdServicio"
       args = {
+        IdCliente  = ctx.request.query.id_cliente
         IdSede     = ctx.request.query.id_sede
         IdServicio = ctx.request.query.id_servicio
-        IdCliente  = ctx.request.query.id_cliente
       }
     }
 

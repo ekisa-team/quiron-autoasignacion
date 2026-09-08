@@ -13,11 +13,7 @@ endpoint "GET /api/v1/configuracion/parametros-envio" {
   pipeline {
     sql "consultar_smtp" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        SELECT TOP 1 EmailServidorSmtp, EmailPuertoSmtp, EmailUsuarioSmtp, EmailPasswordSmtp, EmailHabilitarSsl, EmailNombreRemitente 
-        FROM dbo.ParametrosEnvio 
-        WHERE IdCliente = @IdCliente
-      SQL
+      query      = "EXEC dbo.Proc_Aut_ConsultarParametrosEnvio @IdCliente"
       args = {
         IdCliente = ctx.request.query.id_cliente
       }
@@ -36,10 +32,7 @@ endpoint "GET /api/v1/lookups/holidays" {
   pipeline {
     sql "consultar_festivos" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        SELECT fechaCalendario 
-        FROM dbo.Festivos
-      SQL
+      query      = "EXEC dbo.Proc_Aut_ConsultarFestivos"
     }
 
     respond {
@@ -55,11 +48,7 @@ endpoint "GET /api/v1/lookups/document-types" {
   pipeline {
     sql "consultar_tipos_doc" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        SELECT codigoDocumento, nombreDocumento 
-        FROM dbo.TiposDocumento 
-        WHERE Proceso = 'PAC' ORDER BY orden ASC
-      SQL
+      query      = "EXEC dbo.Proc_Aut_ConsultarTiposDocumento 'PAC'"
     }
 
     respond {
@@ -75,11 +64,7 @@ endpoint "GET /api/v1/lookups/biological-sexes" {
   pipeline {
     sql "consultar_sexos" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        SELECT Codigo AS codigo, Nombre AS nombre 
-        FROM dbo.SexoBiologico 
-        ORDER BY Codigo ASC
-      SQL
+      query      = "EXEC dbo.Proc_Aut_ConsultarSexosBiologicos"
     }
 
     respond {

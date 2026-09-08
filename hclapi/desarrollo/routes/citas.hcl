@@ -58,8 +58,8 @@ schema "grabar_cita_request" {
   field "ume" {
     type        = string
     required    = true
-    enum        = ["A", "M", "D"]
-    description = "Unidad de medida de edad (A: Años, M: Meses, D: Días)"
+    enum        = ["AÑOS", "MESES", "DIAS"]
+    description = "Unidad de medida de edad (AÑOS, MESES, DIAS)"
   }
 }
 
@@ -87,7 +87,6 @@ endpoint "POST /api/v1/citas" {
         UME             = ctx.request.body.ume
       }
 
-      # Captura de colisión de clave única o conflicto en SQL Server
       catch "2627" {
         status = 409
         body   = problem(409, "El cupo o la clave de cita ya se encuentra reservada", "cupo-no-disponible")

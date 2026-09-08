@@ -170,52 +170,30 @@ endpoint "POST /api/v1/auth/solicitar-recuperacion" {
   }
 
   pipeline {
-    sql "consultar_paciente" {
+    sql "solicitar_token" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        SELECT TOP 1 p.CodigoPaciente, p.CorreoPaciente, p.IdentificacionPaciente 
-        FROM dbo.Pacientes p 
-          INNER JOIN dbo.UsuarioPaciente u ON u.PatientId = p.CodigoPaciente 
-          AND u.ClientId = @ClientId 
-        WHERE p.IdentificacionPaciente = @Doc 
-          AND p.CodigoTipoDocumento = @DocType 
-          AND p.CorreoPaciente = @Email 
-          AND p.IdCliente = @ClientId
-      SQL
+      query      = "EXEC dbo.Proc_Aut_SolicitarRecuperacionClave @Doc, @DocType, @Email, @Token, @ClientId"
       args = {
         Doc      = ctx.request.body.identification
         DocType  = ctx.request.body.document_type
         Email    = ctx.request.body.email
+        Token    = ctx.request.body.reset_token
         ClientId = ctx.request.body.client_id
       }
     }
 
     respond {
-      condition = steps.consultar_paciente.rows_affected == 0
+      condition = steps.solicitar_token.rows_affected == 0
       status    = 404
       body      = problem(404, "Paciente no encontrado o los datos no coinciden.")
-    }
-
-    sql "actualizar_token" {
-      connection = connection.sqlserver.main
-      query      = <<-SQL
-        UPDATE dbo.UsuarioPaciente 
-        SET PasswordResetSecret = @Token, PasswordResetExpiresAt = DATEADD(hour, 1, SYSUTCDATETIME()), UpdatedAt = SYSUTCDATETIME() 
-        WHERE PatientId = @PatientId AND ClientId = @ClientId
-      SQL
-      args = {
-        Token     = ctx.request.body.reset_token
-        PatientId = steps.consultar_paciente.row.CodigoPaciente
-        ClientId  = ctx.request.body.client_id
-      }
     }
 
     respond {
       status = 200
       body = {
         status         = "success"
-        email          = steps.consultar_paciente.row.CorreoPaciente
-        identification = steps.consultar_paciente.row.IdentificacionPaciente
+        email          = steps.solicitar_token.row.CorreoPaciente
+        identification = steps.solicitar_token.row.IdentificacionPaciente
       }
     }
   }
@@ -229,38 +207,20 @@ endpoint "POST /api/v1/auth/restablecer-clave" {
   }
 
   pipeline {
-    sql "validar_token" {
+    sql "restablecer" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        SELECT TOP 1 u.Id, p.CorreoPaciente 
-        FROM dbo.UsuarioPaciente u 
-        INNER JOIN dbo.Pacientes p ON p.CodigoPaciente = u.PatientId 
-        WHERE u.PasswordResetSecret = @Token AND u.ClientId = @ClientId 
-          AND (u.PasswordResetExpiresAt IS NULL OR u.PasswordResetExpiresAt > SYSUTCDATETIME())
-      SQL
+      query      = "EXEC dbo.Proc_Aut_RestablecerClaveToken @Token, @NewPasswordHash, @ClientId"
       args = {
-        Token    = ctx.request.body.token
-        ClientId = ctx.request.body.client_id
+        Token           = ctx.request.body.token
+        NewPasswordHash = ctx.request.body.new_password_hash
+        ClientId        = ctx.request.body.client_id
       }
     }
 
     respond {
-      condition = steps.validar_token.rows_affected == 0
+      condition = steps.restablecer.rows_affected == 0
       status    = 400
       body      = problem(400, "Token invalido o expirado")
-    }
-
-    sql "actualizar_clave" {
-      connection = connection.sqlserver.main
-      query      = <<-SQL
-        UPDATE dbo.UsuarioPaciente 
-        SET PasswordHash = @Hash, PasswordResetSecret = NULL, PasswordResetExpiresAt = NULL, LoginAttempts = 0, LockedUntil = NULL, UpdatedAt = SYSUTCDATETIME() 
-        WHERE Id = @Id
-      SQL
-      args = {
-        Id   = steps.validar_token.row.Id
-        Hash = ctx.request.body.new_password_hash
-      }
     }
 
     respond {
@@ -268,7 +228,7 @@ endpoint "POST /api/v1/auth/restablecer-clave" {
       body = {
         status  = "success"
         message = "Contrasena restablecida con exito"
-        email   = steps.validar_token.row.CorreoPaciente
+        email   = steps.restablecer.row.CorreoPaciente
       }
     }
   }
@@ -284,11 +244,7 @@ endpoint "POST /api/v1/auth/verificar-email" {
   pipeline {
     sql "verificar_token" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        UPDATE dbo.UsuarioPaciente 
-        SET EmailVerified = 1, EmailVerificationToken = NULL, EmailVerificationExpiresAt = NULL, UpdatedAt = SYSUTCDATETIME() 
-        WHERE EmailVerificationToken = @Token AND ClientId = @ClientId
-      SQL
+      query      = "EXEC dbo.Proc_Aut_VerificarEmailToken @Token, @ClientId"
       args = {
         Token    = ctx.request.body.token
         ClientId = ctx.request.body.client_id
@@ -296,7 +252,7 @@ endpoint "POST /api/v1/auth/verificar-email" {
     }
 
     respond {
-      condition = steps.verificar_token.rows_affected == 0
+      condition = steps.verificar_token.row.FilasAfectadas == 0
       status    = 400
       body      = problem(400, "Token invalido o expirado")
     }
@@ -334,15 +290,7 @@ endpoint "GET /api/v1/auth/validar-token-recuperacion" {
   pipeline {
     sql "comprobar_token" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        SELECT TOP 1 u.Id 
-        FROM dbo.UsuarioPaciente u 
-        INNER JOIN dbo.Pacientes p ON p.CodigoPaciente = u.PatientId 
-        WHERE u.PasswordResetSecret = @Token 
-          AND p.IdentificacionPaciente = @Doc 
-          AND u.ClientId = @ClientId 
-          AND (u.PasswordResetExpiresAt IS NULL OR u.PasswordResetExpiresAt > SYSUTCDATETIME())
-      SQL
+      query      = "EXEC dbo.Proc_Aut_ValidarTokenRecuperacion @Token, @Doc, @ClientId"
       args = {
         Token    = ctx.request.query.token
         Doc      = ctx.request.query.identificacion
@@ -361,7 +309,7 @@ endpoint "GET /api/v1/auth/validar-token-recuperacion" {
 
 endpoint "POST /api/v1/auth/intento-fallido" {
   description = "Incrementa los intentos fallidos de login atómicamente y bloquea la cuenta si llega a 5."
-  
+
   request {
     body = schema.login_fallido_request
   }
@@ -369,20 +317,7 @@ endpoint "POST /api/v1/auth/intento-fallido" {
   pipeline {
     sql "registrar_intento" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        UPDATE dbo.UsuarioPaciente 
-        SET 
-            LoginAttempts = ISNULL(LoginAttempts, 0) + 1,
-            LockedUntil = CASE 
-                WHEN ISNULL(LoginAttempts, 0) + 1 >= 5 THEN DATEADD(minute, 15, SYSUTCDATETIME()) 
-                ELSE LockedUntil 
-            END,
-            UpdatedAt = SYSUTCDATETIME()
-        OUTPUT 
-            INSERTED.LoginAttempts AS Intentos,
-            CASE WHEN INSERTED.LoginAttempts >= 5 THEN 1 ELSE 0 END AS Bloqueado
-        WHERE Id = @Id
-      SQL
+      query      = "EXEC dbo.Proc_Aut_RegistrarIntentoFallido @Id"
       args = {
         Id = ctx.request.body.usuario_id
       }
@@ -397,7 +332,7 @@ endpoint "POST /api/v1/auth/intento-fallido" {
 
 endpoint "POST /api/v1/auth/login-exitoso" {
   description = "Resetea intentos fallidos y actualiza la fecha tras login exitoso."
-  
+
   request {
     body = schema.login_exitoso_request
   }
@@ -405,11 +340,7 @@ endpoint "POST /api/v1/auth/login-exitoso" {
   pipeline {
     sql "registrar_exito" {
       connection = connection.sqlserver.main
-      query      = <<-SQL
-        UPDATE dbo.UsuarioPaciente 
-        SET LoginAttempts = 0, LockedUntil = NULL, LastLoginAt = SYSUTCDATETIME(), UpdatedAt = SYSUTCDATETIME() 
-        WHERE Id = @Id
-      SQL
+      query      = "EXEC dbo.Proc_Aut_RegistrarLoginExitoso @Id"
       args = {
         Id = ctx.request.body.usuario_id
       }
