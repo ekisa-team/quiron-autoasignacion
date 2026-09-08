@@ -31,31 +31,7 @@ endpoint "GET /docs" {
   description = "Portal interactivo de documentación de la API."
 
   openapi "ui" {
-    ui = "elements"
-  }
-}
-
-endpoint "GET /docs/scalar" {
-  description = "Portal interactivo de documentación de la API."
-
-  openapi "ui" {
-    ui = "scalar"
-  }
-}
-
-endpoint "GET /docs/swagger" {
-  description = "Portal interactivo de documentación de la API."
-
-  openapi "ui" {
-    ui = "swagger"
-  }
-}
-
-endpoint "GET /docs/redoc" {
-  description = "Portal interactivo de documentación de la API."
-
-  openapi "ui" {
-    ui = "redoc"
+    renderer = "elements"
   }
 }
 
