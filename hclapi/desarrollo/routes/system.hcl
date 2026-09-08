@@ -30,7 +30,7 @@ endpoint "GET /health" {
 endpoint "GET /docs" {
   description = "Portal interactivo de documentación de la API."
 
-  openapi {
+  openapi "ui" {
     ui = "elements"
   }
 }
@@ -38,7 +38,7 @@ endpoint "GET /docs" {
 endpoint "GET /docs/scalar" {
   description = "Portal interactivo de documentación de la API."
 
-  openapi {
+  openapi "ui" {
     ui = "scalar"
   }
 }
@@ -46,7 +46,7 @@ endpoint "GET /docs/scalar" {
 endpoint "GET /docs/swagger" {
   description = "Portal interactivo de documentación de la API."
 
-  openapi {
+  openapi "ui" {
     ui = "swagger"
   }
 }
@@ -54,19 +54,19 @@ endpoint "GET /docs/swagger" {
 endpoint "GET /docs/redoc" {
   description = "Portal interactivo de documentación de la API."
 
-  openapi {
+  openapi "ui" {
     ui = "redoc"
   }
 }
 
 endpoint "GET /openapi.json" {
-  openapi {
+  openapi "spec" {
     format = "json"
   }
 }
 
 endpoint "GET /openapi.yaml" {
-  openapi {
+  openapi "spec" {
     format = "yaml"
   }
 }
