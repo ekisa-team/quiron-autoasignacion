@@ -69,13 +69,12 @@ export const GET: RequestHandler = async ({ url, locals }) => {
   }
 };
 
-export const POST: RequestHandler = async ({ request, locals }) => {
+export const POST: RequestHandler = async ({ request, locals, url }) => {
   try {
     const body = await request.json();
     const clientId = locals.clientId || 67;
     const patientCode = Number(locals.user?.patientId);
     const tunnelUrl = locals.tenant?.hclapiUrl;
-
     const {
       fechaServicio,
       horaServicio,
@@ -84,7 +83,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       claveCita,
       idSede,
       edad = 0,
-      ume = "A",
+      ume = "AÑOS",
       activityName,
       professionalName,
       venueName,
@@ -102,14 +101,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         clave_cita: String(claveCita),
         id_sede: Number(idSede),
         edad: Number(edad),
-        ume:
-          ume === "AÑOS"
-            ? "A"
-            : ume === "MESES"
-              ? "M"
-              : ume === "DIAS"
-                ? "D"
-                : ume,
+        ume: String(ume || "AÑOS")
+          .trim()
+          .toUpperCase(), // ✅ Se envía la palabra completa (AÑOS, MESES, DIAS)
       },
       tunnelUrl,
     );
@@ -134,6 +128,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         date: fechaServicio,
         time: horaServicio,
         venueName,
+        originUrl: url.origin,
         tenant: locals.tenant,
         tunnelUrl,
       }).catch((e) => console.error("[Email Error]:", e));
