@@ -17,6 +17,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     const { currentPassword, newPassword } = body;
     const patientId = Number(locals.user.patientId);
     const clientId = Number(locals.user.clientId) || locals.clientId;
+    const tunnelUrl = locals.tenant?.hclapiUrl;
 
     if (!currentPassword || !newPassword) {
       return json(
@@ -35,11 +36,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       );
     }
 
-    const loginCheck = await apiPost<RawPatientLoginApi>("/auth/login", {
-      identificacion: locals.user.patientIdentification,
-      codigo_tipo_documento: "CC",
-      id_cliente: clientId,
-    });
+    const loginCheck = await apiPost<RawPatientLoginApi>(
+      "/auth/login",
+      {
+        identificacion: locals.user.patientIdentification,
+        codigo_tipo_documento: "CC",
+        id_cliente: clientId,
+      },
+      tunnelUrl,
+    );
 
     const user = loginCheck.data;
     if (!user || !user.PasswordHash) {
@@ -53,6 +58,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       currentPassword,
       user.PasswordHash,
     );
+
     if (!isCurrentValid) {
       return json(
         { success: false, message: "La contraseña actual es incorrecta" },
@@ -61,7 +67,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     const newHash = await hashPassword(newPassword);
-
     const result = await apiPost<{ status: string; message: string }>(
       "/auth/cambiar-clave",
       {
@@ -69,6 +74,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         client_id: clientId,
         new_password_hash: newHash,
       },
+      tunnelUrl,
     );
 
     if (!result.ok) {
@@ -79,7 +85,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     if (locals.user.email) {
-      await sendPasswordChangeNotification(clientId, locals.user.email);
+      sendPasswordChangeNotification({
+        clientId,
+        email: locals.user.email,
+        tunnelUrl,
+        tenant: locals.tenant,
+      }).catch(() => {});
     }
 
     return json({ success: true, message: "Contraseña cambiada exitosamente" });

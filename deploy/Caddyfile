@@ -1,0 +1,35 @@
+{
+    debug
+    email {$ACME_EMAIL}
+    admin off
+
+    on_demand_tls {
+        ask http://localhost:5555/check
+    }
+}
+
+http://localhost:5555 {    
+    @valid_domain {http.request.uri.query.domain}.endsWith('.autoasignacion.ekisa.com.co')
+    respond @valid_domain 200
+    respond 403
+}
+
+https:// {
+    tls {
+        on_demand
+    }
+
+    @is_ekisa_autoasignacion host *.autoasignacion.ekisa.com.co
+    handle @is_ekisa_autoasignacion {
+        reverse_proxy quiron-autoasignacion-app:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle {
+        respond "Not Found" 404
+    }
+}

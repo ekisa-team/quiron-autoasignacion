@@ -1,5 +1,6 @@
 <script lang="ts">
-  import Turnstile from "$lib/components/Turnstile.svelte";
+  import { goto } from "$app/navigation";
+  import { createTurnstile } from "$lib/attachments/turnstile.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Calendar } from "$lib/components/ui/calendar";
   import * as Card from "$lib/components/ui/card";
@@ -14,7 +15,6 @@
     today,
   } from "@internationalized/date";
   import { toast } from "svelte-sonner";
-
   import IconArrowLeft from "~icons/lucide/arrow-left";
   import IconCalendar from "~icons/lucide/calendar";
   import IconContact from "~icons/lucide/contact";
@@ -29,18 +29,9 @@
   import IconUser from "~icons/lucide/user";
   import IconUserPlus from "~icons/lucide/user-plus";
   import IconUsers from "~icons/lucide/users";
+  import type { PageData } from "./$types";
 
-  let {
-    data,
-  }: {
-    data: {
-      documentTypes?: DocumentTypeOption[];
-      clientId?: number;
-      initialDoc?: string;
-      initialDocType?: string;
-      fromLogin?: boolean;
-    };
-  } = $props();
+  let { data }: { data: PageData } = $props();
 
   let documentType = $state("");
   let documentNumber = $state("");
@@ -48,11 +39,19 @@
   let secondName = $state("");
   let firstLastName = $state("");
   let secondLastName = $state("");
-
   let isDatePickerOpen = $state(false);
   let birthDateInput = $state("");
   let birthDateValue = $state<DateValue | undefined>(undefined);
   let calendarPlaceholder = $state<DateValue>(new CalendarDate(2000, 1, 1));
+  let turnstileToken = $state("");
+  let resetCounter = $state(0);
+
+  const turnstileAttachment = createTurnstile({
+    onToken: (token) => {
+      turnstileToken = token;
+    },
+    resetTrigger: () => resetCounter,
+  });
 
   function isValidDate(d: number, m: number, y: number): boolean {
     if (isNaN(d) || isNaN(m) || isNaN(y)) return false;
@@ -101,9 +100,7 @@
   let email = $state("");
   let password = $state("");
   let confirmPassword = $state("");
-  let captchaToken = $state("");
   let isLoading = $state(false);
-
   let errors = $state<Record<string, string>>({});
   let submitted = $state(false);
 
@@ -119,7 +116,8 @@
 
   const documentTypes = $derived(data.documentTypes || []);
   const selectedDocLabel = $derived(
-    documentTypes.find((d) => d.value === documentType)?.label,
+    documentTypes.find((d: DocumentTypeOption) => d.value === documentType)
+      ?.label,
   );
 
   $effect(() => {
@@ -131,7 +129,6 @@
   function handleDateInput(e: Event) {
     const target = e.target as HTMLInputElement;
     let val = target.value.replace(/\D/g, "").slice(0, 8);
-
     if (val.length >= 5) {
       birthDateInput = `${val.slice(0, 2)}/${val.slice(2, 4)}/${val.slice(4)}`;
     } else if (val.length >= 3) {
@@ -154,7 +151,6 @@
       const d = Number(val.slice(0, 2));
       const m = Number(val.slice(2, 4));
       const y = Number(val.slice(4));
-
       if (isValidDate(d, m, y)) {
         try {
           birthDateValue = new CalendarDate(y, m, d);
@@ -185,7 +181,6 @@
 
   function validateForm(): boolean {
     const newErrors: Record<string, string> = {};
-
     if (!documentType) newErrors.documentType = "Requerido";
     if (!documentNumber.trim()) newErrors.documentNumber = "Requerido";
     if (!firstName.trim()) newErrors.firstName = "Requerido";
@@ -201,7 +196,6 @@
       newErrors.password = "Mínimo 6 caracteres";
     if (confirmPassword !== password)
       newErrors.confirmPassword = "Las contraseñas no coinciden";
-
     errors = newErrors;
     return Object.keys(newErrors).length === 0;
   }
@@ -209,9 +203,13 @@
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     submitted = true;
-
     if (!validateForm()) {
       toast.error("Por favor completa los campos obligatorios");
+      return;
+    }
+
+    if (!turnstileToken) {
+      toast.error("Por favor completa la verificación de seguridad");
       return;
     }
 
@@ -234,7 +232,7 @@
           celular: mobile,
           email,
           password,
-          captchaToken,
+          turnstileToken,
         }),
       });
 
@@ -243,12 +241,16 @@
         toast.success(
           "Registro exitoso. Se ha enviado un correo de verificación.",
         );
-        window.location.href = "/register-confirmation";
+        goto("/register-confirmation");
       } else {
         toast.error(result.message || "Error al registrar el paciente");
+        turnstileToken = "";
+        resetCounter++;
       }
     } catch (error) {
       toast.error("Error de conexión con el servidor");
+      turnstileToken = "";
+      resetCounter++;
     } finally {
       isLoading = false;
     }
@@ -261,16 +263,17 @@
   <Card.Header class="mb-5 p-0">
     <div class="flex items-center gap-4">
       <div
-        class="flex h-14 w-14 items-center justify-center rounded-full bg-[#3c8ea5] text-white shadow-sm shrink-0"
+        class="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm shrink-0"
       >
         <IconUserPlus class="size-7" />
       </div>
       <div>
-        <h1 class="text-[26px] font-bold text-[#062e3a]">
+        <h1 class="text-[26px] font-bold text-slate-800">
           Registro de Paciente
         </h1>
         <p class="text-[13px] text-slate-500 mt-0.5 leading-snug">
-          Ingresa tus datos personales para crear tu cuenta en la plataforma
+          Ingresa tus datos personales para crear tu cuenta en {data.tenant
+            ?.name || "la plataforma"}
         </p>
       </div>
     </div>
@@ -279,18 +282,18 @@
   <Card.Content class="p-0">
     {#if data.fromLogin}
       <div
-        class="mb-6 flex items-start gap-3 rounded bg-cyan-50 border border-cyan-200 p-3.5 text-[13px] text-cyan-900 leading-relaxed"
+        class="mb-6 flex items-start gap-3 rounded bg-slate-50 border border-slate-200 p-3.5 text-[13px] text-slate-800 leading-relaxed"
       >
-        <IconInfo class="size-5 text-[#3c8ea5] shrink-0 mt-0.5" />
+        <IconInfo class="size-5 text-primary shrink-0 mt-0.5" />
         <div>
-          <p class="font-semibold text-[#062e3a]">
+          <p class="font-semibold text-slate-900">
             No encontramos una cuenta con el documento ingresado.
           </p>
           <p class="mt-0.5 text-slate-600">
             Completa el formulario para registrarte. Si cometiste una
             equivocación al escribir tu documento, <a
-              href="/login?c={data.clientId}"
-              class="font-semibold text-[#3c8ea5] hover:underline"
+              href="/login"
+              class="font-semibold text-primary hover:underline"
               >haz clic aquí para volver al inicio de sesión</a
             >.
           </p>
@@ -306,9 +309,9 @@
     >
       <div>
         <div
-          class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4 text-[#062e3a]"
+          class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4 text-slate-800"
         >
-          <IconIdCard class="size-4 text-[#3c8ea5]" />
+          <IconIdCard class="size-4 text-primary" />
           <h2 class="text-[14px] font-bold tracking-tight">
             1. Identificación y Datos Personales
           </h2>
@@ -406,7 +409,7 @@
               >
                 <Popover.Root bind:open={isDatePickerOpen}>
                   <Popover.Trigger
-                    class="border-r border-slate-300 bg-slate-50 hover:bg-[#3c8ea5] text-slate-500 hover:text-white w-9 p-0 flex items-center justify-center h-full m-0 shrink-0 cursor-pointer transition-colors"
+                    class="border-r border-slate-300 bg-slate-50 hover:bg-muted text-slate-500 w-9 p-0 flex items-center justify-center h-full m-0 shrink-0 cursor-pointer transition-colors"
                     title="Seleccionar fecha"
                   >
                     <IconCalendar class="size-4" />
@@ -584,15 +587,15 @@
                     id="genderSelect"
                     class="w-full h-full border-0 px-3 text-[13px] font-normal shadow-none focus:ring-0"
                   >
-                    {gender === "M" ? "Masculino" : "Femenino"}
+                    {data.biologicalSexes?.find((s) => s.value === gender)
+                      ?.label || "Seleccionar"}
                   </Select.Trigger>
                   <Select.Content>
-                    <Select.Item value="M" label="Masculino"
-                      >Masculino</Select.Item
-                    >
-                    <Select.Item value="F" label="Femenino"
-                      >Femenino</Select.Item
-                    >
+                    {#each data.biologicalSexes || [] as item}
+                      <Select.Item value={item.value} label={item.label}
+                        >{item.label}</Select.Item
+                      >
+                    {/each}
                   </Select.Content>
                 </Select.Root>
               </InputGroup.Root>
@@ -603,9 +606,9 @@
 
       <div>
         <div
-          class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4 text-[#062e3a]"
+          class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4 text-slate-800"
         >
-          <IconContact class="size-4 text-[#3c8ea5]" />
+          <IconContact class="size-4 text-primary" />
           <h2 class="text-[14px] font-bold tracking-tight">
             2. Información de Contacto
           </h2>
@@ -731,9 +734,9 @@
 
       <div>
         <div
-          class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4 text-[#062e3a]"
+          class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4 text-slate-800"
         >
-          <IconShieldCheck class="size-4 text-[#3c8ea5]" />
+          <IconShieldCheck class="size-4 text-primary" />
           <h2 class="text-[14px] font-bold tracking-tight">
             3. Seguridad de la Cuenta
           </h2>
@@ -816,27 +819,30 @@
         </div>
       </div>
 
-      <Turnstile oncallback={(token) => (captchaToken = token)} />
+      <div {@attach turnstileAttachment} class="flex justify-center"></div>
 
-      <div class="pt-2 flex flex-col sm:flex-row justify-center gap-4 w-full">
-        <Button
-          type="submit"
-          disabled={isLoading}
-          class="h-10 w-full sm:w-auto sm:min-w-52.5 px-8 bg-[#3c8ea5] hover:bg-[#0e7490] text-white rounded-[3px] text-[14px] font-medium shadow-none"
-        >
-          <IconUserPlus class="mr-2 size-4.5" />
-          {isLoading ? "Procesando registro..." : "Registrarse"}
-        </Button>
-
-        <Button
-          type="button"
-          href="/login?c={data.clientId || 67}"
-          variant="secondary"
-          class="h-10 w-full sm:w-auto sm:min-w-45 px-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-[3px] text-[14px] font-medium shadow-none"
-        >
-          <IconArrowLeft class="mr-2 size-4.5" />
-          Regresar
-        </Button>
+      <div class="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <div class="flex sm:justify-end">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            class="h-10 w-full sm:max-w-xs px-6 text-[14px] font-medium shadow-none"
+          >
+            <IconUserPlus class="mr-2 size-4.5" />
+            {isLoading ? "Procesando registro..." : "Registrarse"}
+          </Button>
+        </div>
+        <div class="flex sm:justify-start">
+          <Button
+            type="button"
+            href="/login"
+            variant="secondary"
+            class="h-10 w-full sm:max-w-xs px-6 text-[14px] font-medium shadow-none"
+          >
+            <IconArrowLeft class="mr-2 size-4.5" />
+            Regresar
+          </Button>
+        </div>
       </div>
     </form>
   </Card.Content>

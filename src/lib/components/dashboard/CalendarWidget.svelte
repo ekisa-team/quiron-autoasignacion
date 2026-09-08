@@ -35,7 +35,7 @@
   class="flex h-full w-full flex-col sm:flex-row overflow-hidden rounded-[3px] border border-slate-300 bg-white shadow-sm"
 >
   <div
-    class="flex flex-col items-center justify-center bg-[#3c8ea5] p-5 text-white sm:w-60 shrink-0"
+    class="flex flex-col items-center justify-center bg-primary p-5 text-primary-foreground sm:w-60 shrink-0"
   >
     <IconCalendar class="mb-2 size-9" />
     <span class="text-[12px] opacity-90">Fecha seleccionada</span>
@@ -60,12 +60,12 @@
         <div class="relative flex size-full items-center justify-center">
           <CalendarDay
             class={hasAvailability && !outsideMonth
-              ? "font-bold text-[#0e7490] ring-1.5 ring-[#3c8ea5] bg-cyan-50/70"
+              ? "font-bold text-primary ring-1.5 ring-primary bg-primary/10"
               : ""}
           />
           {#if hasAvailability && !outsideMonth}
             <span
-              class="absolute bottom-1 size-1 rounded-full bg-[#3c8ea5] pointer-events-none focus:bg-[#86cfe4]"
+              class="absolute bottom-1 size-1 rounded-full bg-primary pointer-events-none"
             ></span>
           {/if}
         </div>

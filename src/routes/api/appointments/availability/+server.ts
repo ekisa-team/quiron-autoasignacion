@@ -1,5 +1,4 @@
 import { apiGet } from "$lib/server/api";
-import type { RawSlotApi } from "$lib/types/appointments";
 import { json, type RequestHandler } from "@sveltejs/kit";
 
 function parseSlotDateTime(
@@ -38,8 +37,17 @@ function parseSlotDateTime(
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     const body = await request.json();
-    const { fechaC, idProfesional, idServicio, idActividad, idSede } = body;
+    const {
+      fechaC,
+      idProfesional,
+      idServicio,
+      idActividad,
+      idSede,
+      page = 1,
+      pageSize = 50,
+    } = body;
     const clientId = locals.clientId || 67;
+    const tunnelUrl = locals.tenant?.hclapiUrl;
 
     if (!fechaC || !idSede) {
       return json(
@@ -48,26 +56,55 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       );
     }
 
-    const rawSlots = await apiGet<RawSlotApi[]>("/agenda", {
-      fecha: String(fechaC).split("T")[0],
-      id_sede: Number(idSede),
-      id_cliente: clientId,
-      id_profesional: Number(idProfesional) || 0,
-      id_servicio: Number(idServicio) || 0,
-      id_actividad: Number(idActividad) || 0,
-    });
+    const rawSlots = await apiGet<any[]>(
+      "/agenda",
+      {
+        fecha: String(fechaC).split("T")[0],
+        id_sede: Number(idSede),
+        id_cliente: clientId,
+        id_profesional: Number(idProfesional) || 0,
+        id_servicio: Number(idServicio) || 0,
+        id_actividad: Number(idActividad) || 0,
+        page: Number(page),
+        page_size: Number(pageSize),
+      },
+      tunnelUrl,
+    );
 
     const minTimeAllowed = new Date(Date.now() + 10 * 60 * 1000);
-    const availableSlots = (rawSlots || []).filter((slot) => {
-      const slotDateTime = parseSlotDateTime(
-        slot.FechaCita || slot.fechaCita,
-        slot.HoraCita || slot.horaCita,
-      );
-      return slotDateTime > minTimeAllowed;
-    });
+    const availableSlots = (rawSlots || [])
+      .filter((slot) => {
+        const slotDateTime = parseSlotDateTime(
+          slot.FechaCita || slot.fechaCita,
+          slot.HoraCita || slot.horaCita,
+        );
+        return slotDateTime > minTimeAllowed;
+      })
+      .map((s: any) => ({
+        appointmentKey: s.ClaveCita ?? s.claveCita ?? 0,
+        appointmentDate: s.FechaCita ?? s.fechaCita ?? "",
+        appointmentTime: s.HoraCita ?? s.horaCita ?? "",
+        venueName: s.NombreSede ?? s.nombreSede ?? "",
+        professionalName: s.NombreProfesional ?? s.nombreProfesional ?? "",
+        venueAddress: s.DireccionSede ?? s.direccionSede ?? "",
+        professionalId: s.IdProfesional ?? s.idProfesional,
+      }));
 
-    return json(availableSlots);
+    const totalRecords =
+      rawSlots && rawSlots.length > 0 ? (rawSlots[0].TotalRecords ?? 0) : 0;
+    const totalPages = Math.ceil(totalRecords / pageSize) || 1;
+
+    return json({
+      items: availableSlots,
+      totalRecords,
+      page,
+      pageSize,
+      totalPages,
+    });
   } catch {
-    return json([], { status: 500 });
+    return json(
+      { items: [], totalRecords: 0, page: 1, pageSize: 50, totalPages: 1 },
+      { status: 500 },
+    );
   }
 };

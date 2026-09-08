@@ -1,66 +1,28 @@
-# Guía de Contribución - Quirón Autoasignación
+# Guía de Contribución y Estándares de Desarrollo
 
-Gracias por contribuir a este proyecto. Para mantener la calidad, seguridad y consistencia del código, sigue las siguientes directrices.
+## 1. Arquitectura de Acceso a Datos
 
----
+- **Base de Datos Maestra:** SvelteKit solo interactúa directamente con la base de datos maestra a través de `src/lib/server/master-db.ts` para resolver la tabla `dbo.Clientes`.
+- **Datos Médicos y de Agenda:** SvelteKit no ejecuta consultas directas para pacientes o citas. Todo acceso a datos clínicos debe realizarse consumiendo los endpoints de HCLAPI a través de `src/lib/server/api.ts`.
 
-## Estándares de Código
+## 2. Convenciones de Estilos y Theming
 
-### 1. Svelte 5 (Uso Estricto de Runes)
+Para mantener la compatibilidad con el sistema multi-tenant:
 
-- Está **estrictamente prohibida** la sintaxis legacy de Svelte 4 (`export let`, `let:prop`, `$:`).
-- Usa exclusivamente los Runes de Svelte 5:
-  - Estado reactivo: `$state()` y `$state.raw()`
-  - Valores calculados: `$derived()` y `$derived.by()`
-  - Efectos y sincronizaciones: `$effect()`
-  - Propiedades del componente: `$props()` y `$bindable()`
-- Eventos nativos en minúsculas (`onclick`, `onsubmit`, `onchange`).
+- **Prohibido el uso de colores hexadecimales fijos** en los componentes visuales (evitar clases como `bg-[#3c8ea5]` o `text-[#0e7490]`).
+- Utilizar exclusivamente los tokens semánticos de Tailwind configurados en el tema: `bg-primary`, `text-primary`, `border-primary`, `ring-primary` y `text-primary-foreground`.
+- Cualquier regla de estilo personalizada para una clínica debe registrarse en la columna `AutoassignmentConfig` dentro del bloque `theme.variables`.
 
-### 2. TypeScript Estricto (Política 0% `any`)
+## 3. Alta de un Nuevo Cliente (Tenant)
 
-- No se permite el uso del tipo `any`.
-- Todos los modelos y respuestas de base de datos deben tiparse en `src/lib/types/`.
-- Usa interfaces descriptivas para Stored Procedures y respuestas de API.
+Para habilitar una nueva organización en la plataforma no se requiere modificar el código fuente:
 
-### 3. Idioma y Nomenclatura
+1. Crear la carpeta correspondiente con las consultas SQL en `hclapi/<identificador>/`.
+2. Registrar la fila en la tabla `dbo.Clientes` definiendo su `TenantIdentifier` (subdominio en minúsculas) y su JSON en `AutoassignmentConfig`.
+3. Invalidad la caché de Valkey si ya existía una clave previa para dicho identificador.
 
-- **Código fuente:** Todo el código (variables, funciones, componentes, tipos, endpoints) debe nombrarse en **Inglés**.
-  - Ejemplo: `futureAppointments`, `handleAssignAppointment`, `AvailabilitySlot`.
-- **Textos de UI y mensajes de error:** En **Español (es-CO)** orientado al paciente.
+## 4. Flujo de Git y Despliegues
 
-### 4. Modificaciones en la Base de Datos (HCLAPI vs SvelteKit)
-
-**Regla Estricta:** 🛑 SvelteKit NUNCA debe conectarse directamente a la base de datos ni importar el paquete `mssql`.
-
-Si necesita modificar una consulta SQL o consumir un nuevo Stored Procedure:
-
-1. Navegue a `hclapi/escanografia/routes/` y edite o cree un archivo `.hcl`.
-2. Defina la lógica en HCL (schema, pipeline, sql, respond).
-3. Pruebe el nuevo endpoint accediendo a `http://localhost:8080/docs`.
-4. En SvelteKit, abra `src/lib/server/api.ts` y utilice `apiGet` o `apiPost` para consumir ese endpoint.
-5. Defina las interfaces en `src/lib/types/` utilizando el prefijo `Raw` para mapear los JSON retornados por el driver de Go (ej. `RawAppointmentApi`).
-
----
-
-## Flujo de Trabajo con Git
-
-### Convención de Ramas
-
-- `feature/nombre-de-la-funcionalidad`
-- `fix/descripcion-del-bug`
-- `refactor/modulo-a-optimizar`
-
-### Convención de Commits (Conventional Commits)
-
-Los mensajes de commit deben seguir el estándar:
-
-```text
-<tipo>(<alcance>): <descripción concisa en imperativo>
-```
-
-Ejemplos:
-
-- `feat(auth): implement argon2id password hashing`
-- `fix(calendar): correct timezone offset for utc dates`
-- `refactor(dashboard): modularize appointments table component`
-- `build: update sveltekit and tailwind dependencies`
+- Las ramas de desarrollo deben seguir la convención `feat/<nombre>`, `fix/<nombre>` o `refactor/<nombre>`.
+- Todos los commits deben redactarse en inglés siguiendo el estándar de Conventional Commits.
+- La publicación de nuevas imágenes Docker y paquetes HCL se efectúa de manera automática al empujar una etiqueta de versión que comience con `v` (ej. `git tag v1.0.0` y `git push origin v1.0.0`).

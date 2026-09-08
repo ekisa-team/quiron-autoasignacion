@@ -1,5 +1,6 @@
 <script lang="ts">
-  import Turnstile from "$lib/components/Turnstile.svelte";
+  import { goto } from "$app/navigation";
+  import { createTurnstile } from "$lib/attachments/turnstile.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import * as Field from "$lib/components/ui/field";
@@ -10,28 +11,34 @@
   import IconIdCard from "~icons/lucide/id-card";
   import IconMail from "~icons/lucide/mail";
   import IconUser from "~icons/lucide/user";
+  import type { PageData } from "./$types";
 
-  let {
-    data,
-  }: { data: { documentTypes?: DocumentTypeOption[]; clientId?: number } } =
-    $props();
+  let { data }: { data: PageData } = $props();
 
   let documentType = $state("");
   let documentNumber = $state("");
   let email = $state("");
-  let captchaToken = $state("");
   let isLoading = $state(false);
-
   let errors = $state<{
     documentType?: string;
     documentNumber?: string;
     email?: string;
   }>({});
   let submitted = $state(false);
+  let turnstileToken = $state("");
+  let resetCounter = $state(0);
+
+  const turnstileAttachment = createTurnstile({
+    onToken: (token) => {
+      turnstileToken = token;
+    },
+    resetTrigger: () => resetCounter,
+  });
 
   const documentTypes = $derived(data.documentTypes || []);
   const selectedDocLabel = $derived(
-    documentTypes.find((d) => d.value === documentType)?.label,
+    documentTypes.find((d: DocumentTypeOption) => d.value === documentType)
+      ?.label,
   );
 
   function validateForm(): boolean {
@@ -51,14 +58,17 @@
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     submitted = true;
-
     if (!validateForm()) {
       toast.error("Por favor completa todos los campos requeridos");
       return;
     }
 
-    isLoading = true;
+    if (!turnstileToken) {
+      toast.error("Por favor completa la verificación de seguridad");
+      return;
+    }
 
+    isLoading = true;
     try {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
@@ -67,16 +77,18 @@
           documentType,
           identification: documentNumber,
           email,
-          captchaToken,
+          turnstileToken,
           clientId: data.clientId,
         }),
       });
 
       const result = await res.json();
       toast.success(result.message);
-      window.location.href = `/forgot-password-confirmation?c=${data.clientId}`;
+      goto(`/forgot-password-confirmation`);
     } catch (err) {
       toast.error("Error de conexión con el servidor");
+      turnstileToken = "";
+      resetCounter++;
     } finally {
       isLoading = false;
     }
@@ -86,12 +98,12 @@
 <Card.Root class="w-full max-w-md border-0 bg-white p-8 shadow-2xl rounded-lg">
   <Card.Header class="mb-5 p-0">
     <div
-      class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#3c8ea5] text-white shadow-sm"
+      class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
     >
       <IconMail class="size-8" />
     </div>
     <div>
-      <h1 class="text-[28px] font-bold text-[#3c8ea5]">Recuperar clave</h1>
+      <h1 class="text-[28px] font-bold text-slate-800">Recuperar clave</h1>
       <p class="text-[13px] text-slate-500 mt-1 leading-snug">
         Ingresa tu documento y correo registrado para verificar tu identidad
       </p>
@@ -205,13 +217,13 @@
         </Field.Group>
       </Field.Set>
 
-      <Turnstile oncallback={(token) => (captchaToken = token)} />
+      <div {@attach turnstileAttachment} class="flex justify-center"></div>
 
       <div class="pt-2 space-y-2">
         <Button
           type="submit"
           disabled={isLoading}
-          class="h-9 w-full text-[14px] font-medium bg-[#3c8ea5] hover:bg-[#0e7490] text-white rounded-[3px] shadow-none"
+          class="h-10 w-full text-[14px] font-medium shadow-none"
         >
           {isLoading
             ? "Validando y enviando..."
@@ -219,8 +231,9 @@
         </Button>
         <Button
           type="button"
-          href="/login?c={data.clientId}"
-          class="h-9 w-full text-[14px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-[3px] shadow-none"
+          href="/login"
+          variant="secondary"
+          class="h-10 w-full text-[14px] font-medium shadow-none"
         >
           Regresar
         </Button>

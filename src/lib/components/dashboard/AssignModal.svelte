@@ -26,7 +26,7 @@
   >
     <AlertDialog.Header class="flex flex-col items-center text-center">
       <div
-        class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#3c8ea5] text-white shadow-sm"
+        class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
       >
         <IconCalendarCheck class="size-7" />
       </div>
@@ -50,7 +50,7 @@
     <AlertDialog.Footer class="mt-6 flex flex-row justify-center gap-3">
       <Button
         onclick={onConfirm}
-        class="h-9 w-28 bg-[#3c8ea5] hover:bg-[#0e7490] text-white rounded-[3px] text-[13px] shadow-none"
+        class="h-9 w-28 bg-primary hover:bg-primary/90 text-primary-foreground rounded-[3px] text-[13px] shadow-none"
       >
         Aceptar
       </Button>

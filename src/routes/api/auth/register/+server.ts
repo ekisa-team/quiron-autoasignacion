@@ -14,22 +14,21 @@ export const POST: RequestHandler = async ({
   request,
   locals,
   getClientAddress,
+  url,
 }) => {
   try {
     const body = await request.json();
     const clientId = Number(body.clientId) || locals.clientId || 67;
+    const tunnelUrl = locals.tenant?.hclapiUrl;
 
-    if (body.captchaToken) {
-      const isCaptchaValid = await verifyTurnstileToken(
-        body.captchaToken,
-        getClientAddress(),
+    if (
+      !body.turnstileToken ||
+      !(await verifyTurnstileToken(body.turnstileToken, getClientAddress()))
+    ) {
+      return json(
+        { success: false, message: "Verificación de seguridad fallida" },
+        { status: 400 },
       );
-      if (!isCaptchaValid) {
-        return json(
-          { success: false, message: "Verificación de seguridad fallida" },
-          { status: 400 },
-        );
-      }
     }
 
     const {
@@ -87,6 +86,7 @@ export const POST: RequestHandler = async ({
         verification_token: verificationToken,
         client_id: clientId,
       },
+      tunnelUrl,
     );
 
     if (!result.ok || result.data?.Success === 0) {
@@ -102,13 +102,16 @@ export const POST: RequestHandler = async ({
     }
 
     const fullName = `${nombre1} ${apellido1}`.trim();
-    await sendRegistrationVerificationEmail(
+    sendRegistrationVerificationEmail({
       clientId,
       email,
       fullName,
       identification,
-      verificationToken,
-    );
+      token: verificationToken,
+      originUrl: url.origin,
+      tunnelUrl,
+      tenant: locals.tenant,
+    }).catch(() => {});
 
     return json({
       success: true,

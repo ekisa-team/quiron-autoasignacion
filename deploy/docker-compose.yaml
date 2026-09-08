@@ -1,0 +1,74 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-autoasignacion
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - quiron-net
+
+  quiron-autoasignacion-app:
+    image: ghcr.io/ekisa-team/quiron-autoasignacion/app:latest
+    container_name: quiron-autoasignacion-app
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DATABASE_MASTER_URL=${DATABASE_MASTER_URL}
+      - VALKEY_URL=valkey://quiron-valkey:6379
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - PUBLIC_TURNSTILE_SITE_KEY=${PUBLIC_TURNSTILE_SITE_KEY}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
+    networks:
+      - quiron-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    depends_on:
+      - quiron-valkey
+
+  quiron-valkey:
+    image: valkey/valkey:9-alpine
+    container_name: quiron-valkey
+    restart: unless-stopped
+    command: >
+      valkey-server
+        --appendonly yes
+        --appendfsync everysec
+        --save 60 1000
+        --loglevel warning
+    volumes:
+      - valkey-data:/data
+    networks:
+      - quiron-net
+
+  hclapi:
+    image: ghcr.io/ju4n97/hclapi:latest
+    container_name: quiron-hclapi
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../hclapi:/app:ro
+    command: ["serve", "-c", "/app", "--host", "0.0.0.0", "--port", "8080"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - VALKEY_URL=valkey://quiron-valkey:6379
+    networks:
+      - quiron-net
+    depends_on:
+      - quiron-valkey
+
+networks:
+  quiron-net:
+    driver: bridge
+
+volumes:
+  caddy-data:
+  caddy-config:
+  valkey-data:

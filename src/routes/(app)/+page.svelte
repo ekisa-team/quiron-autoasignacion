@@ -1,17 +1,12 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
-  import * as Tabs from "$lib/components/ui/tabs";
-  import type { DateValue } from "@internationalized/date";
-  import { getLocalTimeZone, today } from "@internationalized/date";
-  import { toast } from "svelte-sonner";
-
   import AppointmentsTable from "$lib/components/dashboard/AppointmentsTable.svelte";
   import AssignModal from "$lib/components/dashboard/AssignModal.svelte";
   import AvailabilityTable from "$lib/components/dashboard/AvailabilityTable.svelte";
   import CalendarWidget from "$lib/components/dashboard/CalendarWidget.svelte";
   import CancelModal from "$lib/components/dashboard/CancelModal.svelte";
   import PatientFilters from "$lib/components/dashboard/PatientFilters.svelte";
-
+  import { Button } from "$lib/components/ui/button";
+  import * as Tabs from "$lib/components/ui/tabs";
   import type {
     Appointment,
     AppointmentType,
@@ -21,7 +16,9 @@
     Venue,
   } from "$lib/types/appointments";
   import type { PatientUserSession } from "$lib/types/auth";
-
+  import type { DateValue } from "@internationalized/date";
+  import { getLocalTimeZone, today } from "@internationalized/date";
+  import { toast } from "svelte-sonner";
   import IconCalendar from "~icons/lucide/calendar";
   import IconCalendarDays from "~icons/lucide/calendar-days";
   import IconCalendarPlus from "~icons/lucide/calendar-plus";
@@ -32,6 +29,7 @@
   }: {
     data: {
       user: PatientUserSession | null;
+      tenant?: any;
       venues: Venue[];
       services: MedicalService[];
       activities: AppointmentType[];
@@ -47,7 +45,6 @@
   let activityId = $state("");
   let selectedDate = $state<DateValue | undefined>(today(getLocalTimeZone()));
   let isSearching = $state(false);
-
   let formErrors = $state<{
     venue?: string;
     service?: string;
@@ -80,13 +77,17 @@
   });
 
   let availabilitySlots = $state<AvailabilitySlot[]>([]);
+  let totalRecordsAvailability = $state(0);
+  let totalPagesAvailability = $state(1);
   let pageSizeAvailability = $state("5");
   let pageAvailability = $state(1);
 
   let showAssignModal = $state(false);
   let slotToAssign = $state<AvailabilitySlot | null>(null);
+
   let showCancelModal = $state(false);
   let appointmentToCancel = $state<Appointment | null>(null);
+
   let availableDates = $state<string[]>([]);
 
   $effect(() => {
@@ -109,6 +110,7 @@
   ) {
     if (type === "futuras") isLoadingFuture = true;
     else isLoadingPast = true;
+
     try {
       const res = await fetch(
         `/api/appointments/patient?type=${type}&page=${page}&pageSize=${size}`,
@@ -133,12 +135,16 @@
     }
   }
 
-  async function searchAvailability() {
+  async function searchAvailability(
+    pageNumber: number = 1,
+    size: string = pageSizeAvailability,
+  ) {
     formSubmitted = true;
     if (!validateSearchForm() || !selectedDate) {
       toast.warning("Faltan datos por llenar");
       return;
     }
+
     isSearching = true;
     try {
       const res = await fetch("/api/appointments/availability", {
@@ -149,19 +155,18 @@
           idServicio: serviceId,
           idActividad: activityId,
           idSede: venueId,
+          page: pageNumber,
+          pageSize: Number(size),
         }),
       });
-      const rawSlots = await res.json();
-      availabilitySlots = (rawSlots || []).map((s: any) => ({
-        appointmentKey: s.ClaveCita ?? s.claveCita ?? 0,
-        appointmentDate: s.FechaCita ?? s.fechaCita ?? "",
-        appointmentTime: s.HoraCita ?? s.horaCita ?? "",
-        venueName: s.NombreSede ?? s.nombreSede ?? "",
-        professionalName: s.NombreProfesional ?? s.nombreProfesional ?? "",
-        venueAddress: s.DireccionSede ?? s.direccionSede ?? "",
-        professionalId: s.IdProfesional ?? s.idProfesional,
-      }));
-      pageAvailability = 1;
+      const json = await res.json();
+
+      availabilitySlots = json.items || [];
+      totalRecordsAvailability = json.totalRecords || 0;
+      totalPagesAvailability = json.totalPages || 1;
+      pageAvailability = json.page || 1;
+      pageSizeAvailability = size;
+
       currentTab = "disponibilidad";
     } catch {
       toast.error("Error al consultar agenda médica");
@@ -172,6 +177,7 @@
 
   async function confirmAssign() {
     if (!slotToAssign) return;
+
     try {
       const res = await fetch("/api/appointments/patient", {
         method: "POST",
@@ -183,6 +189,11 @@
           idActividadCita: activityId,
           claveCita: slotToAssign.appointmentKey,
           idSede: venueId,
+          activityName:
+            data.activities?.find((a) => String(a.id) === activityId)?.name ||
+            "Consulta",
+          professionalName: slotToAssign.professionalName,
+          venueName: slotToAssign.venueName,
         }),
       });
       const result = await res.json();
@@ -201,10 +212,21 @@
 
   async function confirmCancel() {
     if (!appointmentToCancel) return;
+
     try {
       const res = await fetch(
         `/api/appointments/${appointmentToCancel.appointmentKey}/cancel`,
-        { method: "PUT" },
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            activityName: appointmentToCancel.activityName,
+            professionalName: appointmentToCancel.professionalName,
+            appointmentDate: appointmentToCancel.appointmentDate,
+            appointmentTime: appointmentToCancel.appointmentTime,
+            venueName: appointmentToCancel.venueName,
+          }),
+        },
       );
       const result = await res.json();
       if (result.success) {
@@ -248,7 +270,6 @@
         onValidate={validateSearchForm}
       />
     </div>
-
     <div class="flex flex-col lg:col-span-4">
       <CalendarWidget
         bind:selectedDate
@@ -261,20 +282,19 @@
   <section class="mt-6 grid gap-4 grid-cols-8 items-stretch">
     <div class="col-span-4 flex justify-end">
       <Button
-        onclick={searchAvailability}
+        onclick={() => searchAvailability(1, pageSizeAvailability)}
         disabled={isSearching}
-        class="h-10 w-full max-w-xs rounded-[3px] bg-[#3c8ea5] px-6 text-[14px] font-medium text-white shadow-none hover:bg-[#0e7490]"
+        class="h-10 w-full max-w-xs rounded-[3px] bg-primary px-6 text-[14px] font-medium text-primary-foreground shadow-none hover:bg-primary/90"
       >
         <IconCalendarPlus class="mr-2 size-5" />
         {isSearching ? "Buscando..." : "Asignar nueva cita"}
       </Button>
     </div>
-
     <div class="col-span-4 flex justify-start">
       <Button
         onclick={() => (currentTab = "futuras")}
         variant="secondary"
-        class="h-10 w-full max-w-xs rounded-[3px] bg-slate-200 px-6 text-[14px] font-medium text-slate-700 shadow-none hover:bg-slate-300"
+        class="h-10 w-full max-w-xs rounded-[3px] px-6 text-[14px] font-medium shadow-none"
       >
         <IconCalendarSearch class="mr-2 size-5" /> Mis citas
       </Button>
@@ -289,20 +309,20 @@
         {#if currentTab !== "disponibilidad"}
           <Tabs.Trigger
             value="futuras"
-            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-[#3c8ea5] data-[state=active]:text-[#3c8ea5] data-[state=active]:shadow-none"
+            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
           >
             <IconCalendarDays class="mr-2 size-4" /> Citas futuras
           </Tabs.Trigger>
           <Tabs.Trigger
             value="anteriores"
-            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-[#3c8ea5] data-[state=active]:text-[#3c8ea5] data-[state=active]:shadow-none"
+            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
           >
             <IconCalendarSearch class="mr-2 size-4" /> Citas anteriores
           </Tabs.Trigger>
         {:else}
           <Tabs.Trigger
             value="disponibilidad"
-            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-[#3c8ea5] data-[state=active]:text-[#3c8ea5] data-[state=active]:shadow-none"
+            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
           >
             <IconCalendar class="mr-2 size-4" /> Disponibilidad
           </Tabs.Trigger>
@@ -328,7 +348,6 @@
             }}
           />
         </Tabs.Content>
-
         <Tabs.Content value="anteriores" class="mt-0">
           <AppointmentsTable
             appointments={pastAppointments}
@@ -341,12 +360,15 @@
             onPageChange={(p, s) => fetchAppointments("anteriores", p, s)}
           />
         </Tabs.Content>
-
         <Tabs.Content value="disponibilidad" class="mt-0">
           <AvailabilityTable
             slots={availabilitySlots}
+            totalRecords={totalRecordsAvailability}
+            totalPages={totalPagesAvailability}
             bind:pageSize={pageSizeAvailability}
             bind:page={pageAvailability}
+            isLoading={isSearching}
+            onPageChange={(p, s) => searchAvailability(p, s)}
             onAssignClick={(slot: AvailabilitySlot) => {
               slotToAssign = slot;
               showAssignModal = true;

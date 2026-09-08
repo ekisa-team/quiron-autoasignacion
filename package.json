@@ -10,7 +10,8 @@
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "hclapi": "set -a && . ./.env && set +a && hclapi serve -c ./hclapi/escanografia"
+    "hclapi:dev": "dotenv -- hclapi serve -c ./hclapi/desarrollo",
+    "hclapi:escano": "dotenv -- hclapi serve -c ./hclapi/escanografia"
   },
   "devDependencies": {
     "@fontsource-variable/inter": "^5.3.0",
@@ -20,12 +21,14 @@
     "@sveltejs/kit": "^2.63.0",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/vite": "^4.3.0",
+    "@types/cloudflare-turnstile": "^0.2.2",
     "@types/ioredis": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/mssql": "^12.3.0",
     "@types/nodemailer": "^8.0.1",
     "bits-ui": "^2.16.3",
     "clsx": "^2.1.1",
+    "dotenv-cli": "^11.0.0",
     "mode-watcher": "^1.1.0",
     "shadcn-svelte": "^1.5.1",
     "svelte": "^5.56.1",

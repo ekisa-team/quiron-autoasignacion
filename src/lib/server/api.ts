@@ -1,15 +1,18 @@
 import { env } from "$env/dynamic/private";
 
-const BASE_URL = env.API_TUNNEL_URL || "http://localhost:8080/api/v1";
+const DEFAULT_BASE_URL = env.API_TUNNEL_URL || "http://localhost:8080/api/v1";
 
 export async function apiGet<T>(
   endpoint: string,
   params?: Record<string, string | number>,
+  baseUrl?: string,
 ): Promise<T | null> {
   try {
+    const root = baseUrl || DEFAULT_BASE_URL;
     const url = new URL(
-      `${BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
+      `${root}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
     );
+
     if (params) {
       for (const [key, value] of Object.entries(params)) {
         if (value !== undefined && value !== null) {
@@ -34,10 +37,12 @@ export async function apiGet<T>(
 export async function apiPost<T, B = Record<string, unknown>>(
   endpoint: string,
   body: B,
+  baseUrl?: string,
 ): Promise<{ data: T | null; status: number; ok: boolean }> {
   try {
+    const root = baseUrl || DEFAULT_BASE_URL;
     const res = await fetch(
-      `${BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
+      `${root}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
       {
         method: "POST",
         headers: {
@@ -61,10 +66,12 @@ export async function apiPost<T, B = Record<string, unknown>>(
 
 export async function apiDelete<T>(
   endpoint: string,
+  baseUrl?: string,
 ): Promise<{ data: T | null; status: number; ok: boolean }> {
   try {
+    const root = baseUrl || DEFAULT_BASE_URL;
     const res = await fetch(
-      `${BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
+      `${root}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
       {
         method: "DELETE",
         headers: { Accept: "application/json" },

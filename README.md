@@ -1,113 +1,108 @@
-# Quirón - Autoasignación de Citas Médicas (Fullstack + HCLAPI)
+# Quirón - Autoasignación de Citas Médicas (Multi-Tenant & BFF)
 
-Módulo unificado de **Autoasignación de Citas Médicas y Portal de Pacientes**, desarrollado con **SvelteKit (Svelte 5 con Runes)**, **Tailwind CSS v4** y una capa de datos desacoplada de alto rendimiento a través de **HCLAPI**.
+Módulo unificado de **Autoasignación de Citas Médicas y Portal de Pacientes**, desarrollado con **SvelteKit (Svelte 5 con Runes)**, **Tailwind CSS v4**, caché en memoria con **Valkey** y una capa de datos desacoplada a través de **HCLAPI** y base de datos maestra.
 
-Este proyecto consolida y reemplaza la arquitectura anterior (.NET 8 API + Angular 19) en una arquitectura moderna basada en el patrón BFF (Backend For Frontend).
+Este proyecto implementa una arquitectura **Multi-Tenant dinámica** donde un único contenedor web es capaz de atender a múltiples clínicas y hospitales a través de subdominios (`*.autoasignacion.ekisa.com.co`), inyectando en tiempo de ejecución sus colores corporativos, logotipos y túneles privados de datos.
 
 ---
 
 ## Tecnologías Principales
 
 - **Frontend & BFF:** [SvelteKit 2](https://kit.svelte.dev/) con [Svelte 5 (Runes)](https://svelte.dev/docs/svelte/v5-migration-guide)
-- **Capa de Datos:** **HCLAPI** (Microservicio en Go para interacción RESTful con SQL Server)
-- **Lenguaje:** [TypeScript 6](https://www.typescriptlang.org/) (Tipado estricto, 0% `any`)
+- **Capa de Caché Distribuido:** [Valkey](https://valkey.io/) (Almacenamiento en memoria compatible con Redis)
+- **Capa de Datos On-Premise:** **HCLAPI** (Microservicio en Go para interacción RESTful con SQL Server)
+- **Base de Datos Maestra:** Microsoft SQL Server (`ekisapp`) para resolución de tenants
+- **Proxy Inverso & TLS:** [Caddy Server](https://caddyserver.com/) con certificados SSL automáticos On-Demand
 - **Estilos & UI:** [Tailwind CSS v4](https://tailwindcss.com/), [Shadcn Svelte](https://shadcn-svelte.com/) y [Bits UI](https://bits-ui.com/)
 - **Iconografía:** [Unplugin Icons](https://github.com/unplugin/unplugin-icons) ([Lucide](https://lucide.dev/))
-- **Base de Datos:** [Microsoft SQL Server](https://www.microsoft.com/sql-server)
-- **Criptografía:** [Argon2id](https://www.npmjs.com/package/argon2) (100% compatible con hashes de .NET)
-- **Autenticación & Sesión:** JWT firmados (`jsonwebtoken`) en cookies seguras `HttpOnly`
-- **Mensajería:** [Nodemailer](https://nodemailer.com/) con resolución dinámica de credenciales SMTP por cliente
-- **Seguridad:** [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/) (Captcha inteligente)
+- **Seguridad:** [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/) y [Argon2id](https://www.npmjs.com/package/argon2)
+- **Despliegue:** GitHub Actions y GitHub Container Registry (GHCR)
 
 ---
 
-## Arquitectura y Multi-Tenant
+## Arquitectura y Flujo de Resolución de Tenants
 
-El sistema gestiona múltiples clínicas/entidades (`IdCliente`) dividiendo responsabilidades en dos capas:
+```mermaid
+flowchart TD
+    A["Navegador<br/>https://escanografia.autoasignacion.ekisa.com.co"]
+    B["Caddy<br/>Proxy inverso"]
+    C["SvelteKit<br/>src/hooks.server.ts"]
+    D["Obtener identificador del tenant<br/>TenantIdentifier"]
+    E["Valkey<br/>GET tenant:config:{TenantIdentifier}"]
+    F{"¿Configuración<br/>en caché?"}
+    G["Leer configuración<br/>desde Valkey"]
+    H["Consultar BD / API<br/>por TenantIdentifier"]
+    I["Guardar configuración en Valkey<br/>SETEX tenant:config:{TenantIdentifier} 3600"]
+    J{"¿Tenant<br/>existe?"}
+    K["404<br/>Tenant no encontrado"]
+    L["Asignar configuración a<br/>event.locals.tenant"]
+    M["Vistas y páginas<br/>renderizan con la configuración del tenant"]
 
-```text
-Navegador (Usuario)
-        ↓
-[ SVELTEKIT - Capa BFF ]  ← (Maneja SSR, Turnstile, JWT, UI)
-        ↓ HTTP / JSON
-[   HCLAPI - Capa API  ]  ← (Maneja SQL Server, Connection Pools, Reglas de Negocio)
-        ↓
-  Base de Datos (SQL Server)
-```
+    A -->|"Host"| B
+    B --> C
+    C --> D
+    D --> E
 
-1. **Resolución de Tenant (`clientId`):** SvelteKit resuelve el cliente a través de Query Params (`?c=`), Token de sesión o Cookies, y transmite este parámetro a HCLAPI en cada petición.
-2. **Desacoplamiento de BD:** SvelteKit **NO** se conecta directamente a la base de datos. Todo el flujo de datos (consultas, Stored Procedures y actualizaciones) está expuesto por la capa HCLAPI mediante endpoints REST rápidos y seguros.
+    E --> F
+    F -->|"Sí"| G
+    F -->|"No"| H
 
----
+    H --> I
+    G --> J
+    I --> J
 
-## Estructura del Proyecto
-
-```text
-quiron-autoasignacion/
-├── hclapi/                           #  Capa de Datos (Servicio HCLAPI)
-│   └── escanografia/                 
-│       ├── connections.hcl           # Configuración del pool SQL Server
-│       ├── server.hcl                # Configuración del servidor Go (Puerto 8080)
-│       └── routes/                   # Endpoints SQL definidos en HCL
-├── src/
-│   ├── app.d.ts                      
-│   ├── hooks.server.ts               # Middlewares y resolución de Tenant
-│   ├── lib/
-│   │   ├── components/               # UI y Dashboard
-│   │   ├── server/                   # Lógica BFF
-│   │   │   ├── api.ts                # [NUEVO] Cliente HTTP para consumir HCLAPI
-│   │   │   ├── email.ts              # Servicio SMTP dinámico
-│   │   │   ├── jwt.ts                
-│   │   │   ├── password.ts           # Argon2id Hasher
-│   │   │   └── turnstile.ts          
-│   │   └── types/                    # Interfaces TS (Mapeo de Raw*Api)
-│   └── routes/
-│       ├── (app)/                    # App protegida
-│       ├── (auth)/                   # Vistas de autenticación
-│       └── api/                      # Endpoints internos de SvelteKit
-├── package.json
-└── vite.config.ts
+    J -->|"No"| K
+    J -->|"Sí"| L
+    L --> M
 ```
 
 ---
 
-## Configuración y Variables de Entorno
+## Entorno de Desarrollo Local
 
-Crea un archivo `.env` en la raíz del proyecto:
+### 1. Variables de Entorno (`.env`)
+
+Crear un archivo `.env` en la raíz del proyecto:
 
 ```env
-# URL de la base de datos que consumirá HCLAPI
 DATABASE_URL="sqlserver://usuario:clave@servidor:1433?database=QUIRON2INSTITUCIONES&encrypt=true"
-
-# URL Interna de HCLAPI (Para que SvelteKit se comunique)
+DATABASE_MASTER_URL="sqlserver://usuario:clave@servidor:1433?database=QUIRON2INSTITUCIONES&encrypt=true"
+VALKEY_URL="valkey://localhost:6379"
 API_TUNNEL_URL="http://localhost:8080/api/v1"
-
-# URL Pública de SvelteKit
 PUBLIC_BASE_URL="http://localhost:5173"
-
-# Seguridad y Sesión
-JWT_SECRET_KEY="tu_super_secreto_jwt"
-
-# Cloudflare Turnstile (Captcha)
-PUBLIC_TURNSTILE_SITE_KEY="1x00000000000000000000AA"
-TURNSTILE_SECRET_KEY="1x0000000000000000000000000000000AA"
+JWT_SECRET_KEY="tu_clave_secreta_jwt"
+PUBLIC_TURNSTILE_SITE_KEY="tu_site_key_turnstile"
+TURNSTILE_SECRET_KEY="tu_secret_key_turnstile"
 ```
 
----
+### 2. Levantar Servicios Locales
 
-## Instalación y Ejecución Local
-
-Para levantar el entorno de desarrollo, se deben ejecutar los dos servicios en terminales separadas:
+#### Paso A: Levantar el contenedor de Valkey**
 
 ```bash
-# 1. Instalar dependencias
-bun install
+docker compose up -d
+```
 
-# 2. Levantar la capa de Base de Datos (HCLAPI) - Terminal 1
-bun run hclapi
+#### Paso B: Levantar la API de datos (Terminal 1)**
 
-# 3. Levantar el Frontend (SvelteKit) - Terminal 2
+```bash
+bun run hclapi:dev
+```
+
+O para Escanografía:
+
+```bash
+bun run hclapi:escano
+```
+
+#### Paso C: Levantar la aplicación web (Terminal 2)**
+
+```bash
 bun run dev
 ```
 
-La documentación Swagger autogenerada de la base de datos estará en `http://localhost:8080/docs`.
+### 3. Probar Tenants en Desarrollo
+
+- **Cliente Desarrollo (67):** `http://localhost:5173/login?tenant=desarrollo`
+- **Cliente Escanografía (41/2):** `http://localhost:5173/login?tenant=escanografia`
+- **Cliente inexistente (404):** `http://localhost:5173/login?tenant=desconocido`

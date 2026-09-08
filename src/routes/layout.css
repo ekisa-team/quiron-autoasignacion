@@ -4,7 +4,6 @@
 @import "@fontsource-variable/inter";
 
 @import "$lib/styles/theme-default.css";
-@import "$lib/styles/theme-cyberpunk.css";
 
 @custom-variant dark (&:is(.dark *));
 

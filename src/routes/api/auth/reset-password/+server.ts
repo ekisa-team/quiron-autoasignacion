@@ -12,6 +12,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     const body = await request.json();
     const { token, newPassword, clientId } = body;
     const activeClientId = Number(clientId) || locals.clientId || 67;
+    const tunnelUrl = locals.tenant?.hclapiUrl;
 
     if (!token || !newPassword) {
       return json(
@@ -31,7 +32,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     const newHash = await hashPassword(newPassword);
-
     const result = await apiPost<ResetPasswordApiResponse>(
       "/auth/restablecer-clave",
       {
@@ -39,6 +39,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         new_password_hash: newHash,
         client_id: activeClientId,
       },
+      tunnelUrl,
     );
 
     if (!result.ok) {
@@ -52,14 +53,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     if (result.data?.email) {
-      await sendPasswordChangeNotification(activeClientId, result.data.email);
+      sendPasswordChangeNotification({
+        clientId: activeClientId,
+        email: result.data.email,
+        tunnelUrl,
+        tenant: locals.tenant,
+      }).catch(() => {});
     }
 
     return json({
       success: true,
       message: "Contraseña restablecida con éxito. Ya puedes iniciar sesión.",
     });
-  } catch (error) {
+  } catch {
     return json(
       { success: false, message: "Error interno al restablecer la contraseña" },
       { status: 500 },

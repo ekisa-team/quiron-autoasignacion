@@ -1,44 +1,13 @@
 import { apiGet, apiPost } from "$lib/server/api";
+import { sendAppointmentConfirmationEmail } from "$lib/server/email";
 import type { Appointment, RawAppointmentApi } from "$lib/types/appointments";
 import { json, type RequestHandler } from "@sveltejs/kit";
-
-function parseCitaDateTime(
-  dateStr: string | Date | undefined,
-  timeStr: string | Date | undefined,
-): Date {
-  let year = 2026,
-    month = 0,
-    day = 1;
-  if (typeof dateStr === "string") {
-    const [y, m, d] = dateStr.split("T")[0].split("-").map(Number);
-    year = y;
-    month = m - 1;
-    day = d;
-  } else if (dateStr instanceof Date) {
-    year = dateStr.getUTCFullYear();
-    month = dateStr.getUTCMonth();
-    day = dateStr.getUTCDate();
-  }
-
-  let hours = 0,
-    minutes = 0;
-  if (typeof timeStr === "string") {
-    const timePart = timeStr.includes("T") ? timeStr.split("T")[1] : timeStr;
-    const [h, min] = timePart.split(":").map(Number);
-    hours = h || 0;
-    minutes = min || 0;
-  } else if (timeStr instanceof Date) {
-    hours = timeStr.getUTCHours();
-    minutes = timeStr.getUTCMinutes();
-  }
-
-  return new Date(year, month, day, hours, minutes, 0);
-}
 
 export const GET: RequestHandler = async ({ url, locals }) => {
   try {
     const patientCode = Number(locals.user?.patientId);
     const clientId = locals.clientId || 67;
+    const tunnelUrl = locals.tenant?.hclapiUrl;
 
     if (!patientCode) {
       return json(
@@ -49,17 +18,27 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
     const page = Math.max(1, Number(url.searchParams.get("page") || 1));
     const pageSize = Math.max(1, Number(url.searchParams.get("pageSize") || 5));
-    const type = url.searchParams.get("type") || "all";
+    const rawType = url.searchParams.get("type") || "all";
+
+    const tipoConsulta =
+      rawType === "futuras"
+        ? "FUTURAS"
+        : rawType === "anteriores"
+          ? "ANTERIORES"
+          : "TODAS";
 
     const rawCitas = await apiGet<RawAppointmentApi[]>(
       `/pacientes/${patientCode}/citas`,
       {
         id_cliente: clientId,
+        tipo: tipoConsulta,
+        page: page,
+        page_size: pageSize,
       },
+      tunnelUrl,
     );
 
-    const now = new Date();
-    const allAppointments: Appointment[] = (rawCitas || []).map(
+    const items: Appointment[] = (rawCitas || []).map(
       (c: RawAppointmentApi): Appointment => ({
         appointmentKey: c.ClaveCita ?? c.claveCita ?? 0,
         activityName: c.NombreActividad ?? c.nombreActividad ?? "",
@@ -75,21 +54,11 @@ export const GET: RequestHandler = async ({ url, locals }) => {
       }),
     );
 
-    let filtered = allAppointments;
-    if (type === "futuras") {
-      filtered = allAppointments.filter(
-        (c) => parseCitaDateTime(c.appointmentDate, c.appointmentTime) >= now,
-      );
-    } else if (type === "anteriores") {
-      filtered = allAppointments.filter(
-        (c) => parseCitaDateTime(c.appointmentDate, c.appointmentTime) < now,
-      );
-    }
-
-    const totalRecords = filtered.length;
+    const totalRecords =
+      rawCitas && rawCitas.length > 0
+        ? ((rawCitas[0] as any).TotalRecords ?? 0)
+        : 0;
     const totalPages = Math.ceil(totalRecords / pageSize) || 1;
-    const startIndex = (page - 1) * pageSize;
-    const items = filtered.slice(startIndex, startIndex + pageSize);
 
     return json({ items, totalRecords, page, pageSize, totalPages });
   } catch {
@@ -105,6 +74,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     const body = await request.json();
     const clientId = locals.clientId || 67;
     const patientCode = Number(locals.user?.patientId);
+    const tunnelUrl = locals.tenant?.hclapiUrl;
 
     const {
       fechaServicio,
@@ -115,38 +85,34 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       idSede,
       edad = 0,
       ume = "A",
+      activityName,
+      professionalName,
+      venueName,
     } = body;
 
-    const appointmentDateTime = parseCitaDateTime(fechaServicio, horaServicio);
-    if (appointmentDateTime <= new Date()) {
-      return json(
-        {
-          success: false,
-          message: "No es posible asignar una cita en un horario que ya pasó.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const result = await apiPost("/citas", {
-      fecha_servicio: String(fechaServicio).split("T")[0],
-      hora_servicio: String(horaServicio),
-      codigo_paciente: String(patientCode),
-      id_profesional: Number(idProfesional),
-      id_cliente: clientId,
-      id_actividad_cita: Number(idActividadCita),
-      clave_cita: String(claveCita),
-      id_sede: Number(idSede),
-      edad: Number(edad),
-      ume:
-        ume === "AÑOS"
-          ? "A"
-          : ume === "MESES"
-            ? "M"
-            : ume === "DIAS"
-              ? "D"
-              : ume,
-    });
+    const result = await apiPost(
+      "/citas",
+      {
+        fecha_servicio: String(fechaServicio).split("T")[0],
+        hora_servicio: String(horaServicio),
+        codigo_paciente: String(patientCode),
+        id_profesional: Number(idProfesional),
+        id_cliente: clientId,
+        id_actividad_cita: Number(idActividadCita),
+        clave_cita: String(claveCita),
+        id_sede: Number(idSede),
+        edad: Number(edad),
+        ume:
+          ume === "AÑOS"
+            ? "A"
+            : ume === "MESES"
+              ? "M"
+              : ume === "DIAS"
+                ? "D"
+                : ume,
+      },
+      tunnelUrl,
+    );
 
     if (!result.ok) {
       return json(
@@ -156,6 +122,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         },
         { status: 409 },
       );
+    }
+
+    if (locals.user?.email && activityName && venueName) {
+      sendAppointmentConfirmationEmail({
+        clientId,
+        email: locals.user.email,
+        patientName: locals.user.fullName,
+        activityName,
+        professionalName: professionalName || "Asignado por la institución",
+        date: fechaServicio,
+        time: horaServicio,
+        venueName,
+        tenant: locals.tenant,
+        tunnelUrl,
+      }).catch((e) => console.error("[Email Error]:", e));
     }
 
     return json({ success: true, result: result.data });
