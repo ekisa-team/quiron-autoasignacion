@@ -3,6 +3,8 @@
   import { Button } from "$lib/components/ui/button";
   import * as InputGroup from "$lib/components/ui/input-group";
   import { toast } from "svelte-sonner";
+  import IconEye from "~icons/lucide/eye";
+  import IconEyeOff from "~icons/lucide/eye-off";
   import IconKey from "~icons/lucide/key";
   import IconKeyRound from "~icons/lucide/key-round";
 
@@ -11,6 +13,9 @@
   let currentPassword = $state("");
   let newPassword = $state("");
   let confirmPassword = $state("");
+  let showNewPassword = $state(false);
+  let showConfirmPassword = $state(false);
+  let showCurrentPassword = $state(false);
   let isLoading = $state(false);
 
   const isNewShort = $derived(newPassword.length > 0 && newPassword.length < 6);
@@ -27,6 +32,9 @@
     currentPassword = "";
     newPassword = "";
     confirmPassword = "";
+    showCurrentPassword = false;
+    showNewPassword = false;
+    showConfirmPassword = false;
   }
 
   async function handleSubmit(e: SubmitEvent) {
@@ -99,12 +107,29 @@
           </InputGroup.Addon>
           <InputGroup.Input
             id="curPass"
-            type="password"
+            type={showCurrentPassword ? "text" : "password"}
             autocomplete="current-password"
             bind:value={currentPassword}
             placeholder="Contraseña actual"
-            class="h-full border-0 text-[13px] focus-visible:ring-0 shadow-none px-3"
           />
+          <InputGroup.Addon align="inline-end">
+            <InputGroup.Button
+              size="icon-xs"
+              onclick={() => (showCurrentPassword = !showCurrentPassword)}
+              title={showCurrentPassword
+                ? "Ocultar contraseña"
+                : "Ver contraseña"}
+            >
+              {#if showCurrentPassword}
+                <IconEyeOff class="size-4" />
+              {:else}
+                <IconEye class="size-4" />
+              {/if}
+              <span class="sr-only">
+                {showCurrentPassword ? "Ocultar" : "Ver"} contraseña actual
+              </span>
+            </InputGroup.Button>
+          </InputGroup.Addon>
         </InputGroup.Root>
       </div>
 
@@ -126,12 +151,27 @@
           </InputGroup.Addon>
           <InputGroup.Input
             id="newPass"
-            type="password"
+            type={showNewPassword ? "text" : "password"}
             autocomplete="new-password"
             bind:value={newPassword}
             placeholder="Mínimo 6 caracteres"
-            class="h-full border-0 text-[13px] focus-visible:ring-0 shadow-none px-3"
           />
+          <InputGroup.Addon align="inline-end">
+            <InputGroup.Button
+              size="icon-xs"
+              onclick={() => (showNewPassword = !showNewPassword)}
+              title={showNewPassword ? "Ocultar contraseña" : "Ver contraseña"}
+            >
+              {#if showNewPassword}
+                <IconEyeOff class="size-4" />
+              {:else}
+                <IconEye class="size-4" />
+              {/if}
+              <span class="sr-only">
+                {showNewPassword ? "Ocultar" : "Ver"} nueva contraseña
+              </span>
+            </InputGroup.Button>
+          </InputGroup.Addon>
         </InputGroup.Root>
         {#if isNewShort}<small class="text-xs text-red-500 mt-1 block"
             >Mínimo 6 caracteres</small
@@ -156,12 +196,29 @@
           </InputGroup.Addon>
           <InputGroup.Input
             id="repPass"
-            type="password"
+            type={showConfirmPassword ? "text" : "password"}
             autocomplete="new-password"
             bind:value={confirmPassword}
             placeholder="Repite la nueva contraseña"
-            class="h-full border-0 text-[13px] focus-visible:ring-0 shadow-none px-3"
           />
+          <InputGroup.Addon align="inline-end">
+            <InputGroup.Button
+              size="icon-xs"
+              onclick={() => (showConfirmPassword = !showConfirmPassword)}
+              title={showConfirmPassword
+                ? "Ocultar contraseña"
+                : "Ver contraseña"}
+            >
+              {#if showConfirmPassword}
+                <IconEyeOff class="size-4" />
+              {:else}
+                <IconEye class="size-4" />
+              {/if}
+              <span class="sr-only">
+                {showConfirmPassword ? "Ocultar" : "Ver"} confirmación
+              </span>
+            </InputGroup.Button>
+          </InputGroup.Addon>
         </InputGroup.Root>
         {#if mismatch}<small class="text-xs text-red-500 mt-1 block"
             >Las contraseñas no coinciden</small

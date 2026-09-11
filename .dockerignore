@@ -8,7 +8,6 @@ dist
 .env.*
 deploy
 hclapi
-CAMBIOS_PULL_REQUEST.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

@@ -7,6 +7,8 @@
   import * as InputGroup from "$lib/components/ui/input-group";
   import * as Select from "$lib/components/ui/select";
   import { toast } from "svelte-sonner";
+  import IconEye from "~icons/lucide/eye";
+  import IconEyeOff from "~icons/lucide/eye-off";
   import IconIdCard from "~icons/lucide/id-card";
   import IconKey from "~icons/lucide/key";
   import IconUser from "~icons/lucide/user";
@@ -17,6 +19,7 @@
   let documentType = $state("");
   let documentNumber = $state("");
   let password = $state("");
+  let showPassword = $state(false);
   let isLoading = $state(false);
   let errors = $state<{
     documentType?: string;
@@ -210,15 +213,29 @@
               </InputGroup.Addon>
               <InputGroup.Input
                 id="password"
-                type="password"
-                autocomplete="new-password"
+                type={showPassword ? "text" : "password"}
+                autocomplete="current-password"
                 placeholder="Clave"
                 bind:value={password}
-                class="h-full border-0 text-[14px] placeholder:text-slate-500 focus-visible:ring-0 shadow-none px-3"
               />
+              <InputGroup.Addon align="inline-end">
+                <InputGroup.Button
+                  size="icon-sm"
+                  onclick={() => (showPassword = !showPassword)}
+                >
+                  {#if showPassword}
+                    <IconEyeOff />
+                  {:else}
+                    <IconEye />
+                  {/if}
+                  <span class="sr-only"
+                    >{showPassword ? "Ocultar" : "Mostrar"} clave</span
+                  >
+                </InputGroup.Button>
+              </InputGroup.Addon>
             </InputGroup.Root>
             {#if errors.password && submitted}
-              <small class="text-xs text-red-500 mt-1 block"
+              <small class="text-xs text-destructive mt-1 block"
                 >{errors.password}</small
               >
             {/if}

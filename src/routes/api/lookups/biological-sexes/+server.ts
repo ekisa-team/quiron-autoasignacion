@@ -19,6 +19,7 @@ export const GET: RequestHandler = async ({ locals }) => {
     );
     return json(sexes || []);
   } catch (err) {
-    error(500, JSON.stringify(err));
+    const message = err instanceof Error ? err.message : JSON.stringify(err);
+    error(500, message);
   }
 };

@@ -5,6 +5,8 @@
   import * as Field from "$lib/components/ui/field";
   import * as InputGroup from "$lib/components/ui/input-group";
   import { toast } from "svelte-sonner";
+  import IconEye from "~icons/lucide/eye";
+  import IconEyeOff from "~icons/lucide/eye-off";
   import IconKey from "~icons/lucide/key";
   import IconKeyRound from "~icons/lucide/key-round";
   import type { PageData } from "./$types";
@@ -13,6 +15,8 @@
 
   let password = $state("");
   let confirmPassword = $state("");
+  let showPassword = $state(false);
+  let showConfirmPassword = $state(false);
   let isLoading = $state(false);
   let submitted = $state(false);
 
@@ -125,12 +129,24 @@
             </InputGroup.Addon>
             <InputGroup.Input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               autocomplete="new-password"
-              placeholder="Nueva contraseña (mínimo 6 caracteres)"
               bind:value={password}
-              class="h-full border-0 text-[13px] placeholder:text-slate-400 focus-visible:ring-0 shadow-none px-3"
+              placeholder="Nueva contraseña (Mínimo 6 caracteres)"
             />
+            <InputGroup.Addon align="inline-end">
+              <InputGroup.Button
+                size="icon-xs"
+                onclick={() => (showPassword = !showPassword)}
+              >
+                {#if showPassword}
+                  <IconEyeOff />
+                {:else}
+                  <IconEye />
+                {/if}
+                <span class="sr-only">Toggle contraseña</span>
+              </InputGroup.Button>
+            </InputGroup.Addon>
           </InputGroup.Root>
           {#if isPasswordTooShort}
             <small class="text-xs text-red-500 mt-1 block"
@@ -157,12 +173,24 @@
             </InputGroup.Addon>
             <InputGroup.Input
               id="confirmPassword"
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               autocomplete="new-password"
-              placeholder="Repetir nueva contraseña"
               bind:value={confirmPassword}
-              class="h-full border-0 text-[13px] placeholder:text-slate-400 focus-visible:ring-0 shadow-none px-3"
+              placeholder="Repetir nueva contraseña"
             />
+            <InputGroup.Addon align="inline-end">
+              <InputGroup.Button
+                size="icon-xs"
+                onclick={() => (showConfirmPassword = !showConfirmPassword)}
+              >
+                {#if showConfirmPassword}
+                  <IconEyeOff />
+                {:else}
+                  <IconEye />
+                {/if}
+                <span class="sr-only">Toggle confirmar contraseña</span>
+              </InputGroup.Button>
+            </InputGroup.Addon>
           </InputGroup.Root>
           {#if passwordsMismatch}
             <small class="text-xs text-red-500 mt-1 block"

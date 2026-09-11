@@ -49,13 +49,13 @@ export const load: PageServerLoad = async ({ locals }) => {
       ]);
 
     const venues: Venue[] = (venuesRes || []).map((s) => ({
-      id: s.IdSede ?? s.idSede ?? 0,
-      name: s.NombreSede ?? s.nombreSede ?? "",
+      id: s.IdSede,
+      name: s.NombreSede,
     }));
 
     const services: MedicalService[] = (servicesRes || []).map((s) => ({
-      id: s.IdServicio ?? s.idServicio ?? 0,
-      name: s.NombreServicio ?? s.nombreServicio ?? s.Nombre ?? "",
+      id: s.IdServicio,
+      name: s.NombreServicio,
     }));
 
     const holidays: string[] = (holidaysRes || []).map(

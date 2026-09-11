@@ -14,6 +14,7 @@
   } from "$lib/types/appointments";
   import type { DateValue } from "@internationalized/date";
   import { getLocalTimeZone, today } from "@internationalized/date";
+  import { error } from "@sveltejs/kit";
   import { toast } from "svelte-sonner";
   import IconCalendar from "~icons/lucide/calendar";
   import IconCalendarDays from "~icons/lucide/calendar-days";
@@ -145,8 +146,9 @@
         serviceId: a.IdServicio,
         name: a.NombreActividad,
       }));
-    } catch {
-      activities = [];
+    } catch (err) {
+      const message = err instanceof Error ? err.message : JSON.stringify(err);
+      error(500, message);
     }
   }
 
@@ -183,8 +185,9 @@
       pageSizeAvailability = size;
 
       currentTab = "disponibilidad";
-    } catch {
-      toast.error("Error al consultar agenda médica");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : JSON.stringify(err);
+      toast.error(message);
     } finally {
       isSearching = false;
     }
@@ -220,8 +223,9 @@
       } else {
         toast.error(result.message || "Error al asignar cita");
       }
-    } catch {
-      toast.error("Error de conexión");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : JSON.stringify(err);
+      toast.error(message);
     }
   }
 
@@ -251,8 +255,9 @@
       } else {
         toast.error("Error al cancelar cita");
       }
-    } catch {
-      toast.error("Error de conexión");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : JSON.stringify(err);
+      toast.error(message);
     }
   }
 
@@ -262,9 +267,27 @@
         `/api/appointments/available-dates?venueId=${vId}&serviceId=${sId}`,
       );
       availableDates = await res.json();
-    } catch {
-      availableDates = [];
+    } catch (err) {
+      const message = err instanceof Error ? err.message : JSON.stringify(err);
+      error(500, message);
     }
+  }
+
+  function handleSlotAssign(slot: AvailabilitySlot) {
+    if (!activityId || activityId.trim() === "") {
+      formSubmitted = true;
+      formErrors = {
+        ...formErrors,
+        activity: "Debes seleccionar el tipo de cita para asignar",
+      };
+      toast.warning(
+        "Por favor selecciona el Tipo de Cita en el panel superior para continuar.",
+      );
+      return;
+    }
+
+    slotToAssign = slot;
+    showAssignModal = true;
   }
 </script>
 
@@ -384,10 +407,7 @@
             bind:page={pageAvailability}
             isLoading={isSearching}
             onPageChange={(p, s) => searchAvailability(p, s)}
-            onAssignClick={(slot: AvailabilitySlot) => {
-              slotToAssign = slot;
-              showAssignModal = true;
-            }}
+            onAssignClick={handleSlotAssign}
           />
         </Tabs.Content>
       </div>
