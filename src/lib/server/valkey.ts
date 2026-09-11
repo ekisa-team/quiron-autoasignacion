@@ -17,5 +17,6 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 valkey.on("error", (err) => {
-  console.error("[Valkey Error]:", err.message);
+  const message = err instanceof Error ? err.message : JSON.stringify(err);
+  console.error("[Valkey Error]:", message);
 });
