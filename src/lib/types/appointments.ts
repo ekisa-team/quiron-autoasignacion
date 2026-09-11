@@ -58,27 +58,27 @@ export interface RawServiceApi {
 }
 
 export interface RawActivityApi {
-  IdActividad?: number;
-  IdServicio?: number | null;
-  NombreActividad?: string;
+  IdActividad: number;
+  IdServicio: number | null;
+  NombreActividad: string;
 }
 
 export interface RawAppointmentApi {
-  ClaveCita?: number;
-  NombreActividad?: string;
-  NombreProfesional?: string;
-  FechaCita?: string;
-  HoraCita?: string;
-  NombreSede?: string;
-  EstadoServicio?: string;
+  ClaveCita: number;
+  NombreActividad: string;
+  NombreProfesional: string;
+  FechaCita: string;
+  HoraCita: string;
+  NombreSede: string;
+  EstadoServicio: string;
 }
 
 export interface RawSlotApi {
-  ClaveCita?: number;
-  FechaCita?: string;
-  HoraCita?: string;
-  NombreSede?: string;
-  NombreProfesional?: string;
-  DireccionSede?: string;
-  IdProfesional?: number;
+  ClaveCita: number;
+  FechaCita: string;
+  HoraCita: string;
+  NombreSede: string;
+  NombreProfesional: string;
+  DireccionSede: string;
+  IdProfesional: number;
 }

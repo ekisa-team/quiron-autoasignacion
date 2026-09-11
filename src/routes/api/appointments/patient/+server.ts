@@ -41,17 +41,13 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
     const items: Appointment[] = (rawCitas || []).map(
       (c: RawAppointmentApi): Appointment => ({
-        appointmentKey: c.ClaveCita ?? c.claveCita ?? 0,
-        activityName: c.NombreActividad ?? c.nombreActividad ?? "",
-        professionalName: c.NombreProfesional ?? c.nombreProfesional ?? "",
-        appointmentDate: c.FechaCita ?? c.fechaCita ?? "",
-        appointmentTime: c.HoraCita ?? c.horaCita ?? "",
-        venueName: c.NombreSede ?? c.nombreSede ?? "",
-        status: (
-          c.EstadoServicio ??
-          c.estadoServicio ??
-          "ASIGNADA"
-        ).toUpperCase(),
+        appointmentKey: c.ClaveCita,
+        activityName: c.NombreActividad,
+        professionalName: c.NombreProfesional,
+        appointmentDate: c.FechaCita,
+        appointmentTime: c.HoraCita,
+        venueName: c.NombreSede,
+        status: (c.EstadoServicio ?? "ASIGNADA").toUpperCase(),
       }),
     );
 
@@ -62,11 +58,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     const totalPages = Math.ceil(totalRecords / pageSize) || 1;
 
     return json({ items, totalRecords, page, pageSize, totalPages });
-  } catch {
-    return json(
-      { items: [], totalRecords: 0, page: 1, pageSize: 5, totalPages: 1 },
-      { status: 500 },
-    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : JSON.stringify(err);
+    error(500, message);
   }
 };
 
@@ -137,6 +131,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 
     return json({ success: true, result: result.data });
   } catch (err) {
-    error(500, JSON.stringify(err));
+    const message = err instanceof Error ? err.message : JSON.stringify(err);
+    error(500, message);
   }
 };
