@@ -1,6 +1,6 @@
 import { apiDelete } from "$lib/server/api";
 import { sendAppointmentCancellationEmail } from "$lib/server/email";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 interface CancelApiResponse {
   status?: string;
@@ -8,9 +8,14 @@ interface CancelApiResponse {
 }
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
     const appointmentKey = String(params.appointmentKey);
-    const clientId = locals.clientId || 67;
+    const clientId = locals.clientId;
 
     if (!appointmentKey) {
       return json(
@@ -20,6 +25,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
     }
 
     const result = await apiDelete<CancelApiResponse>(
+      tunnelUrl,
       `/citas/${appointmentKey}`,
     );
 

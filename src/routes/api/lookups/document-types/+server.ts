@@ -1,23 +1,31 @@
 import { apiGet } from "$lib/server/api";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 interface DocumentTypeRow {
-  codigoDocumento?: string;
-  CodigoDocumento?: string;
-  nombreDocumento?: string;
-  NombreDocumento?: string;
-  proceso?: string;
-  orden?: number;
+  CodigoDocumento: string;
+  NombreDocumento: string;
+  Proceso: string;
+  Orden: number;
 }
 
 export const GET: RequestHandler = async ({ locals }) => {
   try {
-    const clientId = locals.clientId || 67;
-    const docs = await apiGet<DocumentTypeRow[]>("/lookups/document-types", {
-      id_cliente: clientId,
-    });
+    const clientId = locals.clientId;
+    const tunnelUrl = locals.tenant?.hclapiUrl;
+    if (!tunnelUrl) {
+      error(500, "Tunnel url not found");
+    }
+
+    const docs = await apiGet<DocumentTypeRow[]>(
+      tunnelUrl,
+      "/lookups/document-types",
+      {
+        id_cliente: clientId,
+      },
+    );
+
     return json(docs || []);
-  } catch (error) {
-    return json([], { status: 500 });
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

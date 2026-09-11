@@ -106,7 +106,7 @@
   <Card.Header class="mb-5 p-0">
     <div class="flex items-center gap-4">
       <img
-        src={data.tenant?.logoUrl || "/icons/svg/LogoQuiron.svg"}
+        src={data.tenant?.logoUrl || "/icons/LogoQuiron.png"}
         alt={data.tenant?.name || "Logo Quirón"}
         class="h-24 w-auto max-h-26 max-w-32 object-contain drop-shadow-sm shrink-0"
       />

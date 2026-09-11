@@ -2,22 +2,23 @@ import { apiPost } from "$lib/server/api";
 import { sendPasswordChangeNotification } from "$lib/server/email";
 import { hashPassword, verifyPassword } from "$lib/server/password";
 import type { RawPatientLoginApi } from "$lib/types/auth";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({ request, locals }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
     if (!locals.user) {
-      return json(
-        { success: false, message: "No autenticado" },
-        { status: 401 },
-      );
+      error(401, "No autenticado");
     }
 
     const body = await request.json();
     const { currentPassword, newPassword } = body;
     const patientId = Number(locals.user.patientId);
     const clientId = Number(locals.user.clientId) || locals.clientId;
-    const tunnelUrl = locals.tenant?.hclapiUrl;
 
     if (!currentPassword || !newPassword) {
       return json(
@@ -37,13 +38,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     const loginCheck = await apiPost<RawPatientLoginApi>(
+      tunnelUrl,
       "/auth/login",
       {
         identificacion: locals.user.patientIdentification,
         codigo_tipo_documento: "CC",
         id_cliente: clientId,
       },
-      tunnelUrl,
     );
 
     const user = loginCheck.data;
@@ -68,20 +69,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
     const newHash = await hashPassword(newPassword);
     const result = await apiPost<{ status: string; message: string }>(
+      tunnelUrl,
       "/auth/cambiar-clave",
       {
         patient_id: patientId,
         client_id: clientId,
         new_password_hash: newHash,
       },
-      tunnelUrl,
     );
 
     if (!result.ok) {
-      return json(
-        { success: false, message: "Error al actualizar contraseña" },
-        { status: 500 },
-      );
+      error(500, "Error al cambiar la contraseña");
     }
 
     if (locals.user.email) {
@@ -94,10 +92,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     return json({ success: true, message: "Contraseña cambiada exitosamente" });
-  } catch {
-    return json(
-      { success: false, message: "Error interno del servidor" },
-      { status: 500 },
-    );
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

@@ -1,21 +1,16 @@
-import { env } from "$env/dynamic/private";
-
-const DEFAULT_BASE_URL = env.API_TUNNEL_URL || "http://localhost:8080/api/v1";
-
 export async function apiGet<T>(
+  baseUrl: string,
   endpoint: string,
   params?: Record<string, string | number>,
-  baseUrl?: string,
 ): Promise<T | null> {
   try {
-    const root = baseUrl || DEFAULT_BASE_URL;
     const url = new URL(
-      `${root}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
+      `${baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
     );
 
     if (params) {
       for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined && value !== null) {
+        if (value) {
           url.searchParams.append(key, String(value));
         }
       }
@@ -26,23 +21,26 @@ export async function apiGet<T>(
       headers: { Accept: "application/json" },
     });
 
-    if (!res.ok) return null;
-    return (await res.json()) as T;
+    if (!res.ok) {
+      throw new Error(`[${res.status}] ${res.statusText} - ${url}`);
+    }
+
+    const data = await res.json();
+    return data as T;
   } catch (error) {
     console.error(`[apiGet Error] ${endpoint}:`, error);
-    return null;
+    throw error;
   }
 }
 
 export async function apiPost<T, B = Record<string, unknown>>(
+  baseUrl: string,
   endpoint: string,
   body: B,
-  baseUrl?: string,
 ): Promise<{ data: T | null; status: number; ok: boolean }> {
   try {
-    const root = baseUrl || DEFAULT_BASE_URL;
     const res = await fetch(
-      `${root}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
+      `${baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
       {
         method: "POST",
         headers: {
@@ -55,23 +53,22 @@ export async function apiPost<T, B = Record<string, unknown>>(
 
     const ok = res.ok;
     const status = res.status;
-    const data = (await res.json().catch(() => null)) as T | null;
+    const data = await res.json();
 
     return { data, status, ok };
   } catch (error) {
     console.error(`[apiPost Error] ${endpoint}:`, error);
-    return { data: null, status: 500, ok: false };
+    throw error;
   }
 }
 
 export async function apiDelete<T>(
+  baseUrl: string,
   endpoint: string,
-  baseUrl?: string,
 ): Promise<{ data: T | null; status: number; ok: boolean }> {
   try {
-    const root = baseUrl || DEFAULT_BASE_URL;
     const res = await fetch(
-      `${root}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
+      `${baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`,
       {
         method: "DELETE",
         headers: { Accept: "application/json" },
@@ -80,11 +77,11 @@ export async function apiDelete<T>(
 
     const ok = res.ok;
     const status = res.status;
-    const data = (await res.json().catch(() => null)) as T | null;
+    const data = await res.json();
 
     return { data, status, ok };
   } catch (error) {
     console.error(`[apiDelete Error] ${endpoint}:`, error);
-    return { data: null, status: 500, ok: false };
+    throw error;
   }
 }

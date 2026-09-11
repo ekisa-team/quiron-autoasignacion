@@ -1,13 +1,19 @@
 import { apiGet } from "$lib/server/api";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ url, locals }) => {
   try {
-    const clientId = locals.clientId || 67;
-    const venueId = Number(url.searchParams.get("venueId")) || 0;
-    const serviceId = Number(url.searchParams.get("serviceId")) || 0;
+    const clientId = locals.clientId;
+    const venueId = Number(url.searchParams.get("venueId"));
+    const serviceId = Number(url.searchParams.get("serviceId"));
+
+    const tunnelUrl = locals.tenant?.hclapiUrl;
+    if (!tunnelUrl) {
+      error(500, "Missing HCL API URL");
+    }
 
     const rawDates = await apiGet<Record<string, unknown>[]>(
+      tunnelUrl,
       "/agenda/fechas-disponibles",
       {
         id_cliente: clientId,
@@ -16,16 +22,16 @@ export const GET: RequestHandler = async ({ url, locals }) => {
       },
     );
 
-    const dates: string[] = (rawDates || [])
-      .map((row: Record<string, unknown>): string => {
+    const dates: string[] = (rawDates || []).map(
+      (row: Record<string, unknown>): string => {
         const firstVal = Object.values(row)[0];
         if (!firstVal) return "";
         return String(firstVal).split("T")[0].trim();
-      })
-      .filter((d: string) => d !== "");
+      },
+    );
 
     return json(dates);
-  } catch {
-    return json([]);
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

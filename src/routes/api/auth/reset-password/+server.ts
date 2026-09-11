@@ -1,18 +1,22 @@
 import { apiPost } from "$lib/server/api";
 import { sendPasswordChangeNotification } from "$lib/server/email";
 import { hashPassword } from "$lib/server/password";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 interface ResetPasswordApiResponse {
   email?: string;
 }
 
 export const POST: RequestHandler = async ({ request, locals }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
     const body = await request.json();
     const { token, newPassword, clientId } = body;
-    const activeClientId = Number(clientId) || locals.clientId || 67;
-    const tunnelUrl = locals.tenant?.hclapiUrl;
+    const activeClientId = Number(clientId) || locals.clientId;
 
     if (!token || !newPassword) {
       return json(
@@ -33,13 +37,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
     const newHash = await hashPassword(newPassword);
     const result = await apiPost<ResetPasswordApiResponse>(
+      tunnelUrl,
       "/auth/restablecer-clave",
       {
         token: String(token).trim(),
         new_password_hash: newHash,
         client_id: activeClientId,
       },
-      tunnelUrl,
     );
 
     if (!result.ok) {
@@ -65,10 +69,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       success: true,
       message: "Contraseña restablecida con éxito. Ya puedes iniciar sesión.",
     });
-  } catch {
-    return json(
-      { success: false, message: "Error interno al restablecer la contraseña" },
-      { status: 500 },
-    );
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

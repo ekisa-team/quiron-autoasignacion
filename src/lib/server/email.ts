@@ -88,15 +88,15 @@ function resolveEmailLogoUrl(
 }
 
 async function getEmailConfig(
+  tunnelUrl: string,
   clientId: number,
-  tunnelUrl?: string,
   tenantName?: string,
 ): Promise<EmailParams | null> {
   try {
     const row = await apiGet<SmtpApiResponse>(
+      tunnelUrl,
       "/configuracion/parametros-envio",
       { id_cliente: clientId },
-      tunnelUrl,
     );
 
     if (!row || !row.EmailUsuarioSmtp || !row.EmailPasswordSmtp) {
@@ -122,12 +122,12 @@ export async function sendEmail(
   to: string,
   subject: string,
   htmlBody: string,
-  tunnelUrl?: string,
+  tunnelUrl: string,
   tenantName?: string,
 ): Promise<boolean> {
   try {
     if (!to || !to.trim()) return false;
-    const cfg = await getEmailConfig(clientId, tunnelUrl, tenantName);
+    const cfg = await getEmailConfig(tunnelUrl, clientId, tenantName);
     if (!cfg) return false;
 
     const transporter = nodemailer.createTransport({
@@ -169,6 +169,10 @@ export async function sendRegistrationVerificationEmail(
     tunnelUrl,
     tenant,
   } = params;
+
+  if (!tunnelUrl) {
+    throw new Error("Tunnel URL is required");
+  }
 
   const baseUrl = originUrl || env.PUBLIC_BASE_URL || "http://localhost:5173";
   const link = `${baseUrl}/verify-email?t=${token}&p=${identification}`;
@@ -251,6 +255,10 @@ export async function sendPasswordResetEmail(
     tenant,
   } = params;
 
+  if (!tunnelUrl) {
+    throw new Error("Tunnel URL is required");
+  }
+
   const baseUrl = originUrl || env.PUBLIC_BASE_URL || "http://localhost:5173";
   const link = `${baseUrl}/reset-password?t=${token}&i=${identification}`;
   const tenantName = tenant?.name || "Quirón Autoasignación";
@@ -328,6 +336,10 @@ export async function sendPasswordChangeNotification(
   params: SendPasswordChangeNotificationParams,
 ): Promise<boolean> {
   const { clientId, email, originUrl, tunnelUrl, tenant } = params;
+
+  if (!tunnelUrl) {
+    throw new Error("Tunnel URL is required");
+  }
   const baseUrl = originUrl || env.PUBLIC_BASE_URL || "http://localhost:5173";
   const tenantName = tenant?.name || "Quirón Autoasignación";
   const primaryColor = resolveEmailPrimaryColor(tenant);
@@ -409,6 +421,10 @@ export async function sendAppointmentConfirmationEmail(
     tunnelUrl,
     tenant,
   } = params;
+
+  if (!tunnelUrl) {
+    throw new Error("Tunnel URL is required");
+  }
 
   const baseUrl = originUrl || env.PUBLIC_BASE_URL || "http://localhost:5173";
   const tenantName = tenant?.name || "Quirón Autoasignación";
@@ -503,6 +519,10 @@ export async function sendAppointmentCancellationEmail(
     tunnelUrl,
     tenant,
   } = params;
+
+  if (!tunnelUrl) {
+    throw new Error("Tunnel URL is required");
+  }
 
   const baseUrl = originUrl || env.PUBLIC_BASE_URL || "http://localhost:5173";
   const tenantName = tenant?.name || "Quirón Autoasignación";

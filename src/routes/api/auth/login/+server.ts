@@ -3,7 +3,7 @@ import { generateAccessToken, generateRefreshToken } from "$lib/server/jwt";
 import { verifyPassword } from "$lib/server/password";
 import { verifyTurnstileToken } from "$lib/server/turnstile";
 import type { RawPatientLoginApi } from "$lib/types/auth";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({
   request,
@@ -11,11 +11,15 @@ export const POST: RequestHandler = async ({
   locals,
   getClientAddress,
 }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
     const body = await request.json();
     const { identification, password, documentType, turnstileToken } = body;
-    const clientId = Number(body.clientId) || locals.clientId || 67;
-    const tunnelUrl = locals.tenant?.hclapiUrl;
+    const clientId = Number(body.clientId) || locals.clientId;
 
     if (
       !turnstileToken ||
@@ -35,13 +39,13 @@ export const POST: RequestHandler = async ({
     }
 
     const response = await apiPost<RawPatientLoginApi>(
+      tunnelUrl,
       "/auth/login",
       {
         identificacion: String(identification).trim(),
         codigo_tipo_documento: String(documentType).trim(),
         id_cliente: clientId,
       },
-      tunnelUrl,
     );
 
     const user = response.data;
@@ -75,11 +79,11 @@ export const POST: RequestHandler = async ({
 
     if (!isPasswordValid) {
       const failedRes = await apiPost<{ Intentos: number; Bloqueado: number }>(
+        tunnelUrl,
         "/auth/intento-fallido",
         {
           usuario_id: user.UsuarioId,
         },
-        tunnelUrl,
       );
 
       if (failedRes.ok && failedRes.data) {
@@ -103,23 +107,13 @@ export const POST: RequestHandler = async ({
           );
         }
       } else {
-        return json(
-          {
-            success: false,
-            message: "Identificación o contraseña incorrecta.",
-          },
-          { status: 401 },
-        );
+        error(401, "Identificación o contraseña incorrecta.");
       }
     }
 
-    await apiPost(
-      "/auth/login-exitoso",
-      {
-        usuario_id: user.UsuarioId,
-      },
-      tunnelUrl,
-    );
+    await apiPost(tunnelUrl, "/auth/login-exitoso", {
+      usuario_id: user.UsuarioId,
+    });
 
     const fullName =
       `${user.Nombre1Paciente || ""} ${user.Nombre2Paciente || ""} ${user.Apellido1Paciente || ""} ${user.Apellido2Paciente || ""}`
@@ -172,11 +166,7 @@ export const POST: RequestHandler = async ({
         clientId,
       },
     });
-  } catch (error) {
-    console.error("[Login Error]:", error);
-    return json(
-      { success: false, message: "Error interno del servidor" },
-      { status: 500 },
-    );
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

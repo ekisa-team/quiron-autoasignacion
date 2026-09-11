@@ -1,61 +1,52 @@
 import { apiGet } from "$lib/server/api";
 import type {
   Appointment,
-  AppointmentType,
   MedicalService,
-  RawActivityApi,
   RawServiceApi,
   RawVenueApi,
   Venue,
 } from "$lib/types/appointments";
+import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 interface HolidayApiRow {
-  fechaCalendario?: string | Date;
-  FechaCalendario?: string | Date;
+  FechaCalendario: string;
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
-  const clientId = locals.clientId || 67;
-  const patientCode = Number(locals.user?.patientId) || 0;
+  const clientId = locals.clientId;
+  const patientCode = Number(locals.user?.patientId);
   const tunnelUrl = locals.tenant?.hclapiUrl;
 
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
-    const [
-      venuesRes,
-      servicesRes,
-      activitiesRes,
-      holidaysRes,
-      futureRes,
-      pastRes,
-    ] = await Promise.all([
-      apiGet<RawVenueApi[]>("/sedes", { id_cliente: clientId }, tunnelUrl),
-      apiGet<RawServiceApi[]>(
-        "/servicios",
-        { id_cliente: clientId },
-        tunnelUrl,
-      ),
-      apiGet<RawActivityApi[]>(
-        "/actividades",
-        { id_cliente: clientId, id_servicio: 0 },
-        tunnelUrl,
-      ),
-      apiGet<HolidayApiRow[]>("/lookups/holidays", undefined, tunnelUrl),
-      patientCode > 0
-        ? apiGet<any[]>(
-            `/pacientes/${patientCode}/citas`,
-            { id_cliente: clientId, tipo: "FUTURAS", page: 1, page_size: 5 },
-            tunnelUrl,
-          )
-        : Promise.resolve([]),
-      patientCode > 0
-        ? apiGet<any[]>(
-            `/pacientes/${patientCode}/citas`,
-            { id_cliente: clientId, tipo: "ANTERIORES", page: 1, page_size: 5 },
-            tunnelUrl,
-          )
-        : Promise.resolve([]),
-    ]);
+    const [venuesRes, servicesRes, holidaysRes, futureRes, pastRes] =
+      await Promise.all([
+        apiGet<RawVenueApi[]>(tunnelUrl, "/sedes", { id_cliente: clientId }),
+        apiGet<RawServiceApi[]>(tunnelUrl, "/servicios", {
+          id_cliente: clientId,
+        }),
+        apiGet<HolidayApiRow[]>(tunnelUrl, "/lookups/holidays", undefined),
+        patientCode > 0
+          ? apiGet<any[]>(tunnelUrl, `/pacientes/${patientCode}/citas`, {
+              id_cliente: clientId,
+              tipo: "FUTURAS",
+              page: 1,
+              page_size: 5,
+            })
+          : Promise.resolve([]),
+        patientCode > 0
+          ? apiGet<any[]>(tunnelUrl, `/pacientes/${patientCode}/citas`, {
+              id_cliente: clientId,
+              tipo: "ANTERIORES",
+              page: 1,
+              page_size: 5,
+            })
+          : Promise.resolve([]),
+      ]);
 
     const venues: Venue[] = (venuesRes || []).map((s) => ({
       id: s.IdSede ?? s.idSede ?? 0,
@@ -67,20 +58,10 @@ export const load: PageServerLoad = async ({ locals }) => {
       name: s.NombreServicio ?? s.nombreServicio ?? s.Nombre ?? "",
     }));
 
-    const activities: AppointmentType[] = (activitiesRes || []).map((a) => ({
-      id: a.IdActividad ?? a.idActividad ?? 0,
-      serviceId: a.IdServicio ?? a.idServicio ?? null,
-      name: a.NombreActividad ?? a.nombreActividad ?? "",
-    }));
-
-    const holidays: string[] = (holidaysRes || [])
-      .map((f: HolidayApiRow): string | null => {
-        const raw = f.fechaCalendario ?? f.FechaCalendario;
-        if (!raw) return null;
-        const d = new Date(raw);
-        return isNaN(d.getTime()) ? null : d.toISOString().split("T")[0];
-      })
-      .filter((d): d is string => d !== null);
+    const holidays: string[] = (holidaysRes || []).map(
+      (f: HolidayApiRow) =>
+        new Date(f.FechaCalendario).toISOString().split("T")[0],
+    );
 
     const mapAppointments = (raw: any[]): Appointment[] =>
       (raw || []).map((c) => ({
@@ -110,7 +91,6 @@ export const load: PageServerLoad = async ({ locals }) => {
       tenant: locals.tenant,
       venues,
       services,
-      activities,
       holidays,
       futureAppointments: {
         items: futureItems,
@@ -127,28 +107,8 @@ export const load: PageServerLoad = async ({ locals }) => {
         totalPages: Math.ceil(totalPast / 5) || 1,
       },
     };
-  } catch {
-    return {
-      user: locals.user,
-      tenant: locals.tenant,
-      venues: [],
-      services: [],
-      activities: [],
-      holidays: [],
-      futureAppointments: {
-        items: [],
-        totalRecords: 0,
-        page: 1,
-        pageSize: 5,
-        totalPages: 1,
-      },
-      pastAppointments: {
-        items: [],
-        totalRecords: 0,
-        page: 1,
-        pageSize: 5,
-        totalPages: 1,
-      },
-    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : JSON.stringify(err);
+    error(500, message);
   }
 };

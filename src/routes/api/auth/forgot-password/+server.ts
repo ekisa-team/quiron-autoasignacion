@@ -2,7 +2,7 @@ import { apiPost } from "$lib/server/api";
 import { sendPasswordResetEmail } from "$lib/server/email";
 import { generateSecureToken } from "$lib/server/password";
 import { verifyTurnstileToken } from "$lib/server/turnstile";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 interface PasswordResetApiResponse {
   patient_id?: number;
@@ -16,11 +16,15 @@ export const POST: RequestHandler = async ({
   getClientAddress,
   url,
 }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
     const body = await request.json();
+    const clientId = Number(body.clientId) || locals.clientId;
     const { documentType, identification, email, turnstileToken } = body;
-    const clientId = Number(body.clientId) || locals.clientId || 67;
-    const tunnelUrl = locals.tenant?.hclapiUrl;
 
     if (
       !turnstileToken ||
@@ -42,6 +46,7 @@ export const POST: RequestHandler = async ({
     const resetToken = generateSecureToken(32);
 
     const result = await apiPost<PasswordResetApiResponse>(
+      tunnelUrl,
       "/auth/solicitar-recuperacion",
       {
         document_type: String(documentType).trim(),
@@ -50,7 +55,6 @@ export const POST: RequestHandler = async ({
         reset_token: resetToken,
         client_id: clientId,
       },
-      tunnelUrl,
     );
 
     if (result.ok && result.data?.email) {
@@ -70,11 +74,7 @@ export const POST: RequestHandler = async ({
       message:
         "Si los datos coinciden con una cuenta registrada, recibirás un enlace de recuperación en tu correo.",
     });
-  } catch {
-    return json({
-      success: true,
-      message:
-        "Si los datos coinciden con una cuenta registrada, recibirás un enlace de recuperación en tu correo.",
-    });
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

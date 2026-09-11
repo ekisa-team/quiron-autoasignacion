@@ -1,18 +1,24 @@
 import { apiGet } from "$lib/server/api";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 interface SexRow {
-  codigo?: string;
-  Codigo?: string;
-  nombre?: string;
-  Nombre?: string;
+  Codigo: string;
+  Nombre: string;
 }
 
 export const GET: RequestHandler = async ({ locals }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
-    const sexes = await apiGet<SexRow[]>("/lookups/biological-sexes");
+    const sexes = await apiGet<SexRow[]>(
+      tunnelUrl,
+      "/lookups/biological-sexes",
+    );
     return json(sexes || []);
-  } catch {
-    return json([], { status: 500 });
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

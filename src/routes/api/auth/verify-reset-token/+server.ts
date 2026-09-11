@@ -1,16 +1,22 @@
 import { apiGet } from "$lib/server/api";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({ request, locals }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
     const { token, identification, clientId } = await request.json();
-    const activeClientId = Number(clientId) || locals.clientId || 67;
+    const activeClientId = Number(clientId) || locals.clientId;
 
     if (!token || !identification) {
       return json({ success: false, valid: false });
     }
 
     const result = await apiGet<{ valid?: boolean }>(
+      tunnelUrl,
       "/auth/validar-token-recuperacion",
       {
         token: String(token).trim(),
@@ -20,7 +26,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     );
 
     return json({ success: true, valid: Boolean(result?.valid) });
-  } catch (error) {
-    return json({ success: false, valid: false });
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

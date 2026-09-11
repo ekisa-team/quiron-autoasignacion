@@ -1,50 +1,42 @@
 import { apiGet } from "$lib/server/api";
 import type { DocumentTypeOption } from "$lib/types/appointments";
+import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 interface DocumentTypeApiRow {
-  CodigoDocumento?: string;
-  codigoDocumento?: string;
-  NombreDocumento?: string;
-  nombreDocumento?: string;
+  CodigoDocumento: string;
+  NombreDocumento: string;
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
-  const clientId = locals.clientId || 67;
+  const clientId = locals.clientId;
+
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
 
   try {
-    const docs = await apiGet<DocumentTypeApiRow[]>("/lookups/document-types", {
-      id_cliente: clientId,
-    });
+    const docs = await apiGet<DocumentTypeApiRow[]>(
+      tunnelUrl,
+      "/lookups/document-types",
+      {
+        id_cliente: clientId,
+      },
+    );
 
-    const documentTypes: DocumentTypeOption[] = (docs || [])
-      .map((d: DocumentTypeApiRow) => ({
-        value: d.CodigoDocumento ?? d.codigoDocumento ?? "",
-        label: d.NombreDocumento ?? d.nombreDocumento ?? "",
-      }))
-      .filter((d: DocumentTypeOption) => d.value !== "");
+    const documentTypes: DocumentTypeOption[] = (docs || []).map(
+      (d: DocumentTypeApiRow) => ({
+        value: d.CodigoDocumento,
+        label: d.NombreDocumento,
+      }),
+    );
 
     return {
-      documentTypes:
-        documentTypes.length > 0
-          ? documentTypes
-          : [
-              { value: "CC", label: "Cédula de Ciudadanía" },
-              { value: "TI", label: "Tarjeta de Identidad" },
-              { value: "CE", label: "Cédula de Extranjería" },
-              { value: "PA", label: "Pasaporte" },
-            ],
+      documentTypes,
       clientId,
     };
-  } catch (error) {
-    return {
-      documentTypes: [
-        { value: "CC", label: "Cédula de Ciudadanía" },
-        { value: "TI", label: "Tarjeta de Identidad" },
-        { value: "CE", label: "Cédula de Extranjería" },
-        { value: "PA", label: "Pasaporte" },
-      ],
-      clientId,
-    };
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

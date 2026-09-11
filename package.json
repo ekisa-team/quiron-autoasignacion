@@ -11,12 +11,13 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "hclapi:dev": "dotenv -- hclapi serve -c ./hclapi/desarrollo",
-    "hclapi:escano": "dotenv -- hclapi serve -c ./hclapi/escanografia"
+    "hclapi:escano": "dotenv -- hclapi serve -c ./hclapi/escanografia",
+    "valkey:flush": "docker exec -it quiron-autoasignacion-valkey valkey-cli FLUSHALL"
   },
   "devDependencies": {
     "@fontsource-variable/inter": "^5.3.0",
     "@internationalized/date": "^3.12.0",
-    "@lucide/svelte": "^1.35.0",
+    "@lucide/svelte": "^1.44.0",
     "@sveltejs/adapter-node": "^5.5.4",
     "@sveltejs/kit": "^2.63.0",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",

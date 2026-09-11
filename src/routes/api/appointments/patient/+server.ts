@@ -1,21 +1,22 @@
 import { apiGet, apiPost } from "$lib/server/api";
 import { sendAppointmentConfirmationEmail } from "$lib/server/email";
 import type { Appointment, RawAppointmentApi } from "$lib/types/appointments";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ url, locals }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "No se pudo obtener la URL de HCLAPI");
+  }
+
+  const patientCode = Number(locals.user?.patientId);
+  if (!patientCode) {
+    error(401, "No autenticado");
+  }
+
+  const clientId = locals.clientId;
+
   try {
-    const patientCode = Number(locals.user?.patientId);
-    const clientId = locals.clientId || 67;
-    const tunnelUrl = locals.tenant?.hclapiUrl;
-
-    if (!patientCode) {
-      return json(
-        { success: false, message: "No autenticado" },
-        { status: 401 },
-      );
-    }
-
     const page = Math.max(1, Number(url.searchParams.get("page") || 1));
     const pageSize = Math.max(1, Number(url.searchParams.get("pageSize") || 5));
     const rawType = url.searchParams.get("type") || "all";
@@ -28,6 +29,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
           : "TODAS";
 
     const rawCitas = await apiGet<RawAppointmentApi[]>(
+      tunnelUrl,
       `/pacientes/${patientCode}/citas`,
       {
         id_cliente: clientId,
@@ -35,7 +37,6 @@ export const GET: RequestHandler = async ({ url, locals }) => {
         page: page,
         page_size: pageSize,
       },
-      tunnelUrl,
     );
 
     const items: Appointment[] = (rawCitas || []).map(
@@ -70,11 +71,15 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 };
 
 export const POST: RequestHandler = async ({ request, locals, url }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "No se pudo obtener la URL de HCLAPI");
+  }
+
   try {
     const body = await request.json();
-    const clientId = locals.clientId || 67;
+    const clientId = locals.clientId;
     const patientCode = Number(locals.user?.patientId);
-    const tunnelUrl = locals.tenant?.hclapiUrl;
     const {
       fechaServicio,
       horaServicio,
@@ -89,24 +94,20 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
       venueName,
     } = body;
 
-    const result = await apiPost(
-      "/citas",
-      {
-        fecha_servicio: String(fechaServicio).split("T")[0],
-        hora_servicio: String(horaServicio),
-        codigo_paciente: String(patientCode),
-        id_profesional: Number(idProfesional),
-        id_cliente: clientId,
-        id_actividad_cita: Number(idActividadCita),
-        clave_cita: String(claveCita),
-        id_sede: Number(idSede),
-        edad: Number(edad),
-        ume: String(ume || "AÑOS")
-          .trim()
-          .toUpperCase(), // ✅ Se envía la palabra completa (AÑOS, MESES, DIAS)
-      },
-      tunnelUrl,
-    );
+    const result = await apiPost(tunnelUrl, "/citas", {
+      fecha_servicio: String(fechaServicio).split("T")[0],
+      hora_servicio: String(horaServicio),
+      codigo_paciente: String(patientCode),
+      id_profesional: Number(idProfesional),
+      id_cliente: clientId,
+      id_actividad_cita: Number(idActividadCita),
+      clave_cita: String(claveCita),
+      id_sede: Number(idSede),
+      edad: Number(edad),
+      ume: String(ume || "AÑOS")
+        .trim()
+        .toUpperCase(),
+    });
 
     if (!result.ok) {
       return json(
@@ -135,10 +136,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
     }
 
     return json({ success: true, result: result.data });
-  } catch {
-    return json(
-      { success: false, message: "Error al grabar la cita" },
-      { status: 500 },
-    );
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

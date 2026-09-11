@@ -1,38 +1,5 @@
 import { apiGet } from "$lib/server/api";
-import { json, type RequestHandler } from "@sveltejs/kit";
-
-function parseSlotDateTime(
-  fecha: string | Date | undefined,
-  hora: string | Date | undefined,
-): Date {
-  let year = 2026,
-    month = 0,
-    day = 1;
-  if (typeof fecha === "string") {
-    const [y, m, d] = fecha.split("T")[0].split("-").map(Number);
-    year = y;
-    month = m - 1;
-    day = d;
-  } else if (fecha instanceof Date) {
-    year = fecha.getUTCFullYear();
-    month = fecha.getUTCMonth();
-    day = fecha.getUTCDate();
-  }
-
-  let hours = 0,
-    minutes = 0;
-  if (typeof hora === "string") {
-    const timePart = hora.includes("T") ? hora.split("T")[1] : hora;
-    const [h, min] = timePart.split(":").map(Number);
-    hours = h || 0;
-    minutes = min || 0;
-  } else if (hora instanceof Date) {
-    hours = hora.getUTCHours();
-    minutes = hora.getUTCMinutes();
-  }
-
-  return new Date(year, month, day, hours, minutes, 0);
-}
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
@@ -46,52 +13,40 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       page = 1,
       pageSize = 50,
     } = body;
-    const clientId = locals.clientId || 67;
-    const tunnelUrl = locals.tenant?.hclapiUrl;
 
-    if (!fechaC || !idSede) {
-      return json(
-        { success: false, message: "Faltan parámetros de búsqueda" },
-        { status: 400 },
-      );
+    const tunnelUrl = locals.tenant?.hclapiUrl;
+    if (!tunnelUrl) {
+      error(500, "No se pudo obtener la URL de HCLAPI");
     }
 
-    const rawSlots = await apiGet<any[]>(
-      "/agenda",
-      {
-        fecha: String(fechaC).split("T")[0],
-        id_sede: Number(idSede),
-        id_cliente: clientId,
-        id_profesional: Number(idProfesional) || 0,
-        id_servicio: Number(idServicio) || 0,
-        id_actividad: Number(idActividad) || 0,
-        page: Number(page),
-        page_size: Number(pageSize),
-      },
-      tunnelUrl,
-    );
+    const clientId = locals.clientId;
 
-    const minTimeAllowed = new Date(Date.now() + 10 * 60 * 1000);
-    const availableSlots = (rawSlots || [])
-      .filter((slot) => {
-        const slotDateTime = parseSlotDateTime(
-          slot.FechaCita || slot.fechaCita,
-          slot.HoraCita || slot.horaCita,
-        );
-        return slotDateTime > minTimeAllowed;
-      })
-      .map((s: any) => ({
-        appointmentKey: s.ClaveCita ?? s.claveCita ?? 0,
-        appointmentDate: s.FechaCita ?? s.fechaCita ?? "",
-        appointmentTime: s.HoraCita ?? s.horaCita ?? "",
-        venueName: s.NombreSede ?? s.nombreSede ?? "",
-        professionalName: s.NombreProfesional ?? s.nombreProfesional ?? "",
-        venueAddress: s.DireccionSede ?? s.direccionSede ?? "",
-        professionalId: s.IdProfesional ?? s.idProfesional,
-      }));
+    if (!fechaC || !idSede) {
+      error(400, "Faltan parámetros de búsqueda");
+    }
 
-    const totalRecords =
-      rawSlots && rawSlots.length > 0 ? (rawSlots[0].TotalRecords ?? 0) : 0;
+    const rawSlots = await apiGet<any[]>(tunnelUrl, "/agenda", {
+      fecha: String(fechaC).split("T")[0],
+      id_sede: Number(idSede),
+      id_cliente: clientId,
+      id_profesional: Number(idProfesional),
+      id_servicio: Number(idServicio),
+      id_actividad: Number(idActividad),
+      page: Number(page),
+      page_size: Number(pageSize),
+    });
+
+    const availableSlots = (rawSlots || []).map((s: any) => ({
+      appointmentKey: s.ClaveCita,
+      appointmentDate: s.FechaCita,
+      appointmentTime: s.HoraCita,
+      venueName: s.NombreSede,
+      professionalName: s.NombreProfesional,
+      venueAddress: s.DireccionSede,
+      professionalId: s.IdProfesional,
+    }));
+
+    const totalRecords = rawSlots?.[0]?.TotalRecords ?? 0;
     const totalPages = Math.ceil(totalRecords / pageSize) || 1;
 
     return json({
@@ -101,10 +56,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       pageSize,
       totalPages,
     });
-  } catch {
-    return json(
-      { items: [], totalRecords: 0, page: 1, pageSize: 50, totalPages: 1 },
-      { status: 500 },
-    );
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

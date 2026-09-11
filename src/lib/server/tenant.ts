@@ -47,7 +47,7 @@ async function fetchTenantFromDatabase(
       tenantIdentifier: row.TenantIdentifier,
       clientId: row.IdCliente,
       name: row.NombreEkisa || "Quirón Autoasignación",
-      logoUrl: "/icons/svg/LogoQuiron.svg",
+      logoUrl: "/icons/LogoQuiron.png",
       hclapiUrl: "http://localhost:8080/api/v1",
     };
   } catch (err) {

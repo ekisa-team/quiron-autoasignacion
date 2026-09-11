@@ -1,15 +1,21 @@
 import { apiGet } from "$lib/server/api";
 import type { RawVenueApi } from "$lib/types/appointments";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ locals }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
+  const clientId = locals.clientId;
+
   try {
-    const clientId = locals.clientId || 67;
-    const venues = await apiGet<RawVenueApi[]>("/sedes", {
+    const venues = await apiGet<RawVenueApi[]>(tunnelUrl, "/sedes", {
       id_cliente: clientId,
     });
     return json(venues || []);
-  } catch {
-    return json([], { status: 500 });
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

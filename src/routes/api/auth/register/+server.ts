@@ -2,7 +2,7 @@ import { apiPost } from "$lib/server/api";
 import { sendRegistrationVerificationEmail } from "$lib/server/email";
 import { generateSecureToken, hashPassword } from "$lib/server/password";
 import { verifyTurnstileToken } from "$lib/server/turnstile";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 interface PatientRegisterApiResponse {
   Success?: number;
@@ -16,10 +16,14 @@ export const POST: RequestHandler = async ({
   getClientAddress,
   url,
 }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
     const body = await request.json();
-    const clientId = Number(body.clientId) || locals.clientId || 67;
-    const tunnelUrl = locals.tenant?.hclapiUrl;
+    const clientId = Number(body.clientId) || locals.clientId;
 
     if (
       !body.turnstileToken ||
@@ -68,6 +72,7 @@ export const POST: RequestHandler = async ({
     const verificationToken = generateSecureToken(32);
 
     const result = await apiPost<PatientRegisterApiResponse>(
+      tunnelUrl,
       "/pacientes/registro",
       {
         document_type: String(documentType).trim(),
@@ -86,7 +91,6 @@ export const POST: RequestHandler = async ({
         verification_token: verificationToken,
         client_id: clientId,
       },
-      tunnelUrl,
     );
 
     if (!result.ok || result.data?.Success === 0) {
@@ -117,10 +121,7 @@ export const POST: RequestHandler = async ({
       success: true,
       message: "Usuario y clave creados con éxito",
     });
-  } catch {
-    return json(
-      { success: false, message: "Error interno al registrar paciente" },
-      { status: 500 },
-    );
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };

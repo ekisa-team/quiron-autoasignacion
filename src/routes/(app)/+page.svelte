@@ -11,11 +11,7 @@
     Appointment,
     AppointmentType,
     AvailabilitySlot,
-    MedicalService,
-    PaginatedResult,
-    Venue,
   } from "$lib/types/appointments";
-  import type { PatientUserSession } from "$lib/types/auth";
   import type { DateValue } from "@internationalized/date";
   import { getLocalTimeZone, today } from "@internationalized/date";
   import { toast } from "svelte-sonner";
@@ -24,22 +20,12 @@
   import IconCalendarPlus from "~icons/lucide/calendar-plus";
   import IconCalendarSearch from "~icons/lucide/calendar-search";
 
-  let {
-    data,
-  }: {
-    data: {
-      user: PatientUserSession | null;
-      tenant?: any;
-      venues: Venue[];
-      services: MedicalService[];
-      activities: AppointmentType[];
-      holidays: string[];
-      futureAppointments: PaginatedResult<Appointment>;
-      pastAppointments: PaginatedResult<Appointment>;
-    };
-  } = $props();
+  let { data } = $props();
 
-  let currentTab = $state("futuras");
+  $inspect(data);
+
+  let currentProcess = $state<"asignar-nueva-cita" | "mis-citas">("mis-citas");
+  let currentTab = $state<"futuras" | "disponibilidad">("futuras");
   let venueId = $state("");
   let serviceId = $state("");
   let activityId = $state("");
@@ -89,16 +75,28 @@
   let appointmentToCancel = $state<Appointment | null>(null);
 
   let availableDates = $state<string[]>([]);
+  let activities = $state<AppointmentType[]>([]);
 
   $effect(() => {
     fetchAvailableDates(venueId, serviceId);
+  });
+
+  $effect(() => {
+    if (serviceId) {
+      fetchActivities(serviceId);
+    }
+  });
+
+  $effect(() => {
+    if (currentProcess === "asignar-nueva-cita" && selectedDate) {
+      searchAvailability(1, pageSizeAvailability);
+    }
   });
 
   function validateSearchForm(): boolean {
     const errors: typeof formErrors = {};
     if (!venueId) errors.venue = "Este campo es requerido";
     if (!serviceId) errors.service = "Este campo es requerido";
-    if (!activityId) errors.activity = "Este campo es requerido";
     formErrors = errors;
     return Object.keys(errors).length === 0;
   }
@@ -132,6 +130,23 @@
     } finally {
       if (type === "futuras") isLoadingFuture = false;
       else isLoadingPast = false;
+    }
+  }
+
+  async function fetchActivities(serviceId: string) {
+    try {
+      const res = await fetch(
+        `/api/lookups/appointment-types?idServicio=${serviceId}`,
+      );
+      const json = await res.json();
+
+      activities = (json || []).map((a: any) => ({
+        id: a.IdActividad,
+        serviceId: a.IdServicio,
+        name: a.NombreActividad,
+      }));
+    } catch {
+      activities = [];
     }
   }
 
@@ -190,7 +205,7 @@
           claveCita: slotToAssign.appointmentKey,
           idSede: venueId,
           activityName:
-            data.activities?.find((a) => String(a.id) === activityId)?.name ||
+            activities?.find((a) => String(a.id) === activityId)?.name ||
             "Consulta",
           professionalName: slotToAssign.professionalName,
           venueName: slotToAssign.venueName,
@@ -261,7 +276,7 @@
         userDoc={data.user?.patientIdentification}
         venues={data.venues}
         services={data.services}
-        activities={data.activities}
+        {activities}
         bind:venueId
         bind:serviceId
         bind:activityId
@@ -282,9 +297,16 @@
   <section class="mt-6 grid gap-4 grid-cols-8 items-stretch">
     <div class="col-span-4 flex justify-end">
       <Button
-        onclick={() => searchAvailability(1, pageSizeAvailability)}
-        disabled={isSearching}
-        class="h-10 w-full max-w-xs rounded-[3px] bg-primary px-6 text-[14px] font-medium text-primary-foreground shadow-none hover:bg-primary/90"
+        variant={currentProcess === "asignar-nueva-cita"
+          ? "default"
+          : "outline"}
+        size="lg"
+        disabled={isSearching || !(venueId.trim() && serviceId.trim())}
+        class="w-full max-w-xs rounded-sm px-6 text-[14px] font-medium shadow-none"
+        onclick={() => {
+          currentProcess = "asignar-nueva-cita";
+          searchAvailability(1, pageSizeAvailability);
+        }}
       >
         <IconCalendarPlus class="mr-2 size-5" />
         {isSearching ? "Buscando..." : "Asignar nueva cita"}
@@ -292,9 +314,13 @@
     </div>
     <div class="col-span-4 flex justify-start">
       <Button
-        onclick={() => (currentTab = "futuras")}
-        variant="secondary"
-        class="h-10 w-full max-w-xs rounded-[3px] px-6 text-[14px] font-medium shadow-none"
+        variant={currentProcess === "mis-citas" ? "default" : "outline"}
+        size="lg"
+        class="w-full max-w-xs rounded-sm px-6 text-[14px] font-medium shadow-none"
+        onclick={() => {
+          currentProcess = "mis-citas";
+          currentTab = "futuras";
+        }}
       >
         <IconCalendarSearch class="mr-2 size-5" /> Mis citas
       </Button>
@@ -303,28 +329,17 @@
 
   <section class="mt-8">
     <Tabs.Root bind:value={currentTab} class="w-full">
-      <Tabs.List
-        class="flex h-auto w-full justify-start gap-1 rounded-none border-b border-slate-300 bg-transparent p-0"
-      >
+      <Tabs.List variant="line">
         {#if currentTab !== "disponibilidad"}
-          <Tabs.Trigger
-            value="futuras"
-            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
-          >
-            <IconCalendarDays class="mr-2 size-4" /> Citas futuras
+          <Tabs.Trigger value="futuras" class="after:bg-primary">
+            <IconCalendarDays /> Citas futuras
           </Tabs.Trigger>
-          <Tabs.Trigger
-            value="anteriores"
-            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
-          >
-            <IconCalendarSearch class="mr-2 size-4" /> Citas anteriores
+          <Tabs.Trigger value="anteriores" class="after:bg-primary">
+            <IconCalendarSearch /> Citas anteriores
           </Tabs.Trigger>
         {:else}
-          <Tabs.Trigger
-            value="disponibilidad"
-            class="relative flex-none rounded-none border-b-2 border-transparent bg-transparent px-5 py-3 text-[14px] font-medium text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none"
-          >
-            <IconCalendar class="mr-2 size-4" /> Disponibilidad
+          <Tabs.Trigger value="disponibilidad" class="after:bg-primary">
+            <IconCalendar /> Disponibilidad
           </Tabs.Trigger>
         {/if}
       </Tabs.List>
@@ -384,8 +399,8 @@
   bind:open={showAssignModal}
   slot={slotToAssign}
   patientName={data.user?.fullName ?? ""}
-  activityName={data.activities?.find((a) => String(a.id) === activityId)
-    ?.name ?? "Consulta"}
+  activityName={activities?.find((a) => String(a.id) === activityId)?.name ??
+    "Consulta"}
   onConfirm={confirmAssign}
 />
 

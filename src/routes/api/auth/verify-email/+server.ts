@@ -1,10 +1,15 @@
 import { apiPost } from "$lib/server/api";
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({ request, locals }) => {
+  const tunnelUrl = locals.tenant?.hclapiUrl;
+  if (!tunnelUrl) {
+    error(500, "Tunnel url not found");
+  }
+
   try {
     const { token, clientId } = await request.json();
-    const activeClientId = Number(clientId) || locals.clientId || 67;
+    const activeClientId = Number(clientId) || locals.clientId;
 
     if (!token) {
       return json(
@@ -13,7 +18,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       );
     }
 
-    const result = await apiPost("/auth/verificar-email", {
+    const result = await apiPost(tunnelUrl, "/auth/verificar-email", {
       token: String(token).trim(),
       client_id: activeClientId,
     });
@@ -29,10 +34,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     return json({ success: true, message: "Correo verificado exitosamente" });
-  } catch (error) {
-    return json(
-      { success: false, message: "Error interno del servidor" },
-      { status: 500 },
-    );
+  } catch (err) {
+    error(500, JSON.stringify(err));
   }
 };
