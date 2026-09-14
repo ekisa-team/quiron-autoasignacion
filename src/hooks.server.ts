@@ -1,8 +1,8 @@
 import { dev } from "$app/environment";
 import {
-    generateAccessToken,
-    generateRefreshToken,
-    validateToken,
+  generateAccessToken,
+  generateRefreshToken,
+  validateToken,
 } from "$lib/server/jwt";
 import { resolveTenant } from "$lib/server/tenant";
 import { error, type Handle, type RequestEvent } from "@sveltejs/kit";
@@ -14,7 +14,7 @@ const COOKIE_BASE_OPTIONS = {
   path: "/",
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: !dev,
+  secure: false,
 };
 
 function getTenantIdentifier(event: RequestEvent): string | null {
