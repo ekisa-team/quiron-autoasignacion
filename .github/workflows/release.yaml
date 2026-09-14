@@ -66,12 +66,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -d apir/base
+          test -d apir
 
           mkdir -p dist-apir
           (
-            cd apir/base
-            zip -r "../../dist-apir/apir-base.zip" .
+            cd apir
+            zip -r "../dist-apir/apir-base.zip" .
           )
 
       - name: Upload APIR Artifact
