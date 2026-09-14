@@ -5,12 +5,7 @@ const globalForValkey = globalThis as unknown as {
   valkey: Redis | undefined;
 };
 
-const connectionString = (env.VALKEY_URL || "redis://localhost:6379").replace(
-  "valkey://",
-  "redis://",
-);
-
-export const valkey = globalForValkey.valkey ?? new Redis(connectionString);
+export const valkey = globalForValkey.valkey ?? new Redis(env.VALKEY_URL || "redis://localhost:6379");
 
 if (process.env.NODE_ENV !== "production") {
   globalForValkey.valkey = valkey;

@@ -1,0 +1,19 @@
+endpoints:
+  "GET /":
+    description: "Verificación de estado general del servicio."
+    pipeline:
+      - type: respond
+        status: 200
+        body:
+          app: "Quiron Autoasignacion API"
+          status: "healthy"
+          timestamp: now()
+
+  "GET /health":
+    description: "Liveness probe para balanceadores de carga."
+    pipeline:
+      - type: respond
+        status: 200
+        body:
+          status: "ok"
+          timestamp: now()

@@ -1,5 +1,3 @@
-node_modules
-
 # Output
 .output
 .vercel
@@ -8,15 +6,56 @@ node_modules
 /.svelte-kit
 /build
 
-# OS
-.DS_Store
-Thumbs.db
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+# go.work
+go.work.sum
 
 # Env
 .env
 .env.*
 !.env.example
 !.env.test
+
+# Editor/IDE
+# .idea/
+# .vscode/
+# .zed
+
+# protocol buffers
+# *.pb.go
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+tmp/
+.cache/
+.task/
+
+# Debug
+__debug_bin*
+
+# JavaScript/TypeScript specific
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+pnpm-debug.log
 
 # Vite
 vite.config.js.timestamp-*

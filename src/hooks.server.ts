@@ -1,15 +1,14 @@
 import { dev } from "$app/environment";
 import {
-  generateAccessToken,
-  generateRefreshToken,
-  validateToken,
+    generateAccessToken,
+    generateRefreshToken,
+    validateToken,
 } from "$lib/server/jwt";
 import { resolveTenant } from "$lib/server/tenant";
 import { error, type Handle, type RequestEvent } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 
 const PRODUCTION_DOMAIN = ".autoasignacion.ekisa.com.co";
-const DEFAULT_TENANT = "";
 
 const COOKIE_BASE_OPTIONS = {
   path: "/",
@@ -18,13 +17,30 @@ const COOKIE_BASE_OPTIONS = {
   secure: !dev,
 };
 
-function getTenantIdentifier(event: RequestEvent): string {
+function getTenantIdentifier(event: RequestEvent): string | null {
+  // Explicit header passed by Caddy
+  const headerTenant = event.request.headers.get("x-tenant");
+  if (headerTenant) {
+    return headerTenant;
+  }
+
   const { hostname } = event.url;
 
+  // Production Domain: clinica1.autoasignacion.ekisa.com.co
   if (hostname.endsWith(PRODUCTION_DOMAIN)) {
     return hostname.slice(0, -PRODUCTION_DOMAIN.length);
   }
 
+  // TODO: remove when domain is ready
+  // Free wildcard IP DNS: e.g. clinica1.46.224.43.171.sslip.io
+  if (hostname.endsWith(".sslip.io") || hostname.endsWith(".nip.io")) {
+    const parts = hostname.split(".");
+    if (parts.length > 4) {
+      return parts[0];
+    }
+  }
+
+  // Dev query param: ?tenant=clinica1
   if (dev) {
     const queryTenant = event.url.searchParams.get("tenant");
 
@@ -43,13 +59,16 @@ function getTenantIdentifier(event: RequestEvent): string {
     }
   }
 
-  return DEFAULT_TENANT;
+  return null;
 }
 
 const tenantHandle: Handle = async ({ event, resolve }) => {
   const identifier = getTenantIdentifier(event);
-  const tenant = await resolveTenant(identifier);
+  if (!identifier) {
+    throw error(400, "Identificador de organización no encontrado.");
+  }
 
+  const tenant = await resolveTenant(identifier);
   if (!tenant) {
     throw error(
       404,

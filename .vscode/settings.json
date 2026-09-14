@@ -1,5 +1,11 @@
 {
-	"files.associations": {
-		"*.css": "tailwindcss"
-	}
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/ju4n97/apir/main/schema/schema.json": [
+      "apir/**/*.yml",
+      "apir/**/*.yaml"
+    ]
+  }
 }
