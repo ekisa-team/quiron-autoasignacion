@@ -1,10 +1,10 @@
 import { apiGet } from "$lib/server/api";
 import type {
-  Appointment,
-  MedicalService,
-  RawServiceApi,
-  RawVenueApi,
-  Venue,
+    Appointment,
+    MedicalService,
+    RawServiceApi,
+    RawVenueApi,
+    Venue,
 } from "$lib/types/appointments";
 import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
@@ -16,7 +16,7 @@ interface HolidayApiRow {
 export const load: PageServerLoad = async ({ locals }) => {
   const clientId = locals.clientId;
   const patientCode = Number(locals.user?.patientId);
-  const tunnelUrl = locals.tenant?.hclapiUrl;
+  const tunnelUrl = locals.tenant?.apirUrl;
 
   if (!tunnelUrl) {
     error(500, "Tunnel url not found");

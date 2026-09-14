@@ -1,6 +1,6 @@
 # Quirón - Autoasignación de Citas Médicas (Multi-Tenant & BFF)
 
-Módulo unificado de **Autoasignación de Citas Médicas y Portal de Pacientes**, desarrollado con **SvelteKit (Svelte 5 con Runes)**, **Tailwind CSS v4**, caché en memoria con **Valkey** y una capa de datos desacoplada a través de **HCLAPI** y base de datos maestra.
+Módulo unificado de **Autoasignación de Citas Médicas y Portal de Pacientes**, desarrollado con **SvelteKit (Svelte 5 con Runes)**, **Tailwind CSS v4**, caché en memoria con **Valkey** y una capa de datos desacoplada a través de **apir** y base de datos maestra.
 
 Este proyecto implementa una arquitectura **Multi-Tenant dinámica** donde un único contenedor web es capaz de atender a múltiples clínicas y hospitales a través de subdominios (`*.autoasignacion.ekisa.com.co`), inyectando en tiempo de ejecución sus colores corporativos, logotipos y túneles privados de datos.
 
@@ -10,7 +10,7 @@ Este proyecto implementa una arquitectura **Multi-Tenant dinámica** donde un ú
 
 - **Frontend & BFF:** [SvelteKit 2](https://kit.svelte.dev/) con [Svelte 5 (Runes)](https://svelte.dev/docs/svelte/v5-migration-guide)
 - **Capa de Caché Distribuido:** [Valkey](https://valkey.io/) (Almacenamiento en memoria compatible con Redis)
-- **Capa de Datos On-Premise:** **HCLAPI** (Microservicio en Go para interacción RESTful con SQL Server)
+- **Capa de Datos On-Premise:** **apir** (Microservicio en Go para interacción RESTful con SQL Server)
 - **Base de Datos Maestra:** Microsoft SQL Server (`ekisapp`) para resolución de tenants
 - **Proxy Inverso & TLS:** [Caddy Server](https://caddyserver.com/) con certificados SSL automáticos On-Demand
 - **Estilos & UI:** [Tailwind CSS v4](https://tailwindcss.com/), [Shadcn Svelte](https://shadcn-svelte.com/) y [Bits UI](https://bits-ui.com/)
@@ -83,19 +83,13 @@ TURNSTILE_SECRET_KEY="tu_secret_key_turnstile"
 docker compose up -d
 ```
 
-#### Paso B: Levantar la API de datos (Terminal 1)**
+#### Paso B: Levantar la API de datos**
 
 ```bash
-bun run hclapi:dev
+bun run apir
 ```
 
-O para Escanografía:
-
-```bash
-bun run hclapi:escano
-```
-
-#### Paso C: Levantar la aplicación web (Terminal 2)**
+#### Paso C: Levantar la aplicación web**
 
 ```bash
 bun run dev

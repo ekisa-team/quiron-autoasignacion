@@ -4,9 +4,9 @@ import type { Appointment, RawAppointmentApi } from "$lib/types/appointments";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ url, locals }) => {
-  const tunnelUrl = locals.tenant?.hclapiUrl;
+  const tunnelUrl = locals.tenant?.apirUrl;
   if (!tunnelUrl) {
-    error(500, "No se pudo obtener la URL de HCLAPI");
+    error(500, "No se pudo obtener la URL de apir");
   }
 
   const patientCode = Number(locals.user?.patientId);
@@ -65,9 +65,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 };
 
 export const POST: RequestHandler = async ({ request, locals, url }) => {
-  const tunnelUrl = locals.tenant?.hclapiUrl;
+  const tunnelUrl = locals.tenant?.apirUrl;
   if (!tunnelUrl) {
-    error(500, "No se pudo obtener la URL de HCLAPI");
+    error(500, "No se pudo obtener la URL de apir");
   }
 
   try {

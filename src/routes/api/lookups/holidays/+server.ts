@@ -6,7 +6,7 @@ interface HolidayRow {
 }
 
 export const GET: RequestHandler = async ({ locals }) => {
-  const tunnelUrl = locals.tenant?.hclapiUrl;
+  const tunnelUrl = locals.tenant?.apirUrl;
   if (!tunnelUrl) {
     error(500, "Tunnel url not found");
   }

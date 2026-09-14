@@ -8,7 +8,7 @@ interface CancelApiResponse {
 }
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
-  const tunnelUrl = locals.tenant?.hclapiUrl;
+  const tunnelUrl = locals.tenant?.apirUrl;
   if (!tunnelUrl) {
     error(500, "Tunnel url not found");
   }
@@ -49,7 +49,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
         time: body.appointmentTime,
         venueName: body.venueName || "Sede principal",
         tenant: locals.tenant,
-        tunnelUrl: locals.tenant?.hclapiUrl,
+        tunnelUrl: locals.tenant?.apirUrl,
       }).catch((e) => console.error("[Email Error]:", e));
     }
 

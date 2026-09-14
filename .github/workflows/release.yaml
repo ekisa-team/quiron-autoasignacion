@@ -50,7 +50,7 @@ jobs:
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
 
-  package-hcl-configs:
+  package-apir-config:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -62,42 +62,45 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Package HCL configurations per client as ZIP
+      - name: Package base APIR configuration
         run: |
-          mkdir -p dist-hcl
-          DEST_DIR="$(pwd)/dist-hcl"
-          for dir in hclapi/*/; do
-            if [ -d "$dir" ]; then
-              client=$(basename "$dir")
-              (cd "$dir" && zip -r "${DEST_DIR}/hcl-${client}.zip" .)
-            fi
-          done
+          set -euo pipefail
 
-      - name: Upload HCL Artifacts
+          test -d apir/base
+
+          mkdir -p dist-apir
+          (
+            cd apir/base
+            zip -r "../../dist-apir/apir-base.zip" .
+          )
+
+      - name: Upload APIR Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: client-hcl-packages
-          path: dist-hcl/*.zip
+          name: base-apir-package
+          path: dist-apir/apir-base.zip
 
   create-github-release:
-    needs: [build-and-push-app, package-hcl-configs]
+    needs:
+      - build-and-push-app
+      - package-apir-config
     runs-on: ubuntu-latest
     steps:
       - name: Extract version from tag
         id: version
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Download HCL Artifacts
+      - name: Download APIR Artifact
         uses: actions/download-artifact@v4
         with:
-          name: client-hcl-packages
-          path: dist-hcl
+          name: base-apir-package
+          path: dist-apir
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
-          files: dist-hcl/*.zip
+          files: dist-apir/apir-base.zip
           body: |
             ## Release v${{ steps.version.outputs.version }}
 
@@ -107,5 +110,9 @@ jobs:
             docker pull ${{ env.APP_IMAGE }}:latest
             ```
 
-            ### Client HCL Packages
-            The updated HCL tunnel configuration packages for each clinic are attached below as downloadable ZIP archives.
+            ### Base APIR Configuration
+            The release includes the canonical base APIR configuration:
+
+            `apir-base.zip`
+
+            Client-specific configuration should be adapted locally from this base configuration.

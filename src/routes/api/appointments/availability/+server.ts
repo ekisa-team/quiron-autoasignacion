@@ -14,9 +14,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       pageSize = 50,
     } = body;
 
-    const tunnelUrl = locals.tenant?.hclapiUrl;
+    const tunnelUrl = locals.tenant?.apirUrl;
     if (!tunnelUrl) {
-      error(500, "No se pudo obtener la URL de HCLAPI");
+      error(500, "No se pudo obtener la URL de apir");
     }
 
     const clientId = locals.clientId;
