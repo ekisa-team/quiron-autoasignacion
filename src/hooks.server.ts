@@ -4,8 +4,14 @@ import {
   generateRefreshToken,
   validateToken,
 } from "$lib/server/jwt";
+import { logger } from "$lib/server/logger";
 import { resolveTenant } from "$lib/server/tenant";
-import { error, type Handle, type RequestEvent } from "@sveltejs/kit";
+import {
+  error,
+  type Handle,
+  type HandleServerError,
+  type RequestEvent,
+} from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 
 const PRODUCTION_DOMAIN = ".autoasignacion.ekisa.com.co";
@@ -62,14 +68,69 @@ function getTenantIdentifier(event: RequestEvent): string | null {
   return null;
 }
 
+const loggingHandle: Handle = async ({ event, resolve }) => {
+  const start = Date.now();
+  const { method } = event.request;
+  const path = event.url.pathname;
+
+  const clientIp =
+    event.request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    event.getClientAddress();
+
+  const response = await resolve(event);
+
+  const durationMs = Date.now() - start;
+  const status = response.status;
+  const tenant =
+    event.locals.tenant?.tenantIdentifier ||
+    getTenantIdentifier(event) ||
+    "sin-tenant";
+  const user = event.locals.user?.patientIdentification || "anonimo";
+
+  const logData = {
+    method,
+    path,
+    status,
+    durationMs,
+    tenant,
+    clientId: event.locals.clientId ?? null,
+    user,
+    ip: clientIp,
+  };
+
+  if (status >= 500) {
+    logger.error(logData, `[500 ERROR] ${method} ${path} (${durationMs}ms)`);
+  } else if (status >= 400) {
+    logger.warn(
+      logData,
+      `[WARN] ${method} ${path} -> ${status} (${durationMs}ms)`,
+    );
+  } else {
+    logger.info(
+      logData,
+      `[HTTP] ${method} ${path} -> ${status} (${durationMs}ms)`,
+    );
+  }
+
+  return response;
+};
+
 const tenantHandle: Handle = async ({ event, resolve }) => {
   const identifier = getTenantIdentifier(event);
   if (!identifier) {
+    logger.warn(
+      { path: event.url.pathname },
+      "Identificador de organización no encontrado",
+    );
     throw error(400, "Identificador de organización no encontrado.");
   }
 
   const tenant = await resolveTenant(identifier);
   if (!tenant) {
+    logger.warn(
+      { identifier, path: event.url.pathname },
+      "Organización no encontrada o inactiva",
+    );
     throw error(
       404,
       `Organización '${identifier}' no encontrada o no configurada`,
@@ -119,4 +180,27 @@ const authHandle: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-export const handle = sequence(tenantHandle, authHandle);
+export const handle = sequence(loggingHandle, tenantHandle, authHandle);
+
+export const handleError: HandleServerError = ({
+  error,
+  event,
+  status,
+  message,
+}) => {
+  logger.error(
+    {
+      error,
+      status,
+      path: event.url.pathname,
+      tenant: event.locals.tenant?.tenantIdentifier || "desconocido",
+      clientId: event.locals.clientId,
+      user: event.locals.user?.patientIdentification,
+    },
+    `[SERVER EXCEPTION] ${message} en ${event.url.pathname}`,
+  );
+
+  return {
+    message: "Error interno en el servidor",
+  };
+};
