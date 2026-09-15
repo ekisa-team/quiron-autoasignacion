@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import ChangePasswordModal from "$lib/components/dashboard/ChangePasswordModal.svelte";
   import type { Snippet } from "svelte";
   import IconChevronDown from "~icons/lucide/chevron-down";
@@ -13,8 +12,11 @@
   let isMenuOpen = $state(false);
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    goto(`/login`);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      window.location.href = "/login";
+    }
   }
 </script>
 
