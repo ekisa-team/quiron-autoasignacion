@@ -11,11 +11,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Verificación de estado general del servicio.
-         * @description Verificación de estado general del servicio.
-         */
-        get: operations["get"];
+        /** Verificación de estado general del servicio */
+        get: operations["getRoot"];
         put?: never;
         post?: never;
         delete?: never;
@@ -31,11 +28,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta actividades filtradas por servicio o todas si id_servicio es 0.
-         * @description Consulta actividades filtradas por servicio o todas si id_servicio es 0.
-         */
-        get: operations["getApiV1Actividades"];
+        /** Consulta actividades filtradas por servicio o todas si id_servicio es 0 */
+        get: operations["getActividades"];
         put?: never;
         post?: never;
         delete?: never;
@@ -51,11 +45,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta la disponibilidad de cupos en agenda por fecha paginada.
-         * @description Consulta la disponibilidad de cupos en agenda por fecha paginada.
-         */
-        get: operations["getApiV1Agenda"];
+        /** Consulta la disponibilidad de cupos en agenda por fecha paginada */
+        get: operations["getAgenda"];
         put?: never;
         post?: never;
         delete?: never;
@@ -71,11 +62,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta las fechas que tienen cupos disponibles desde hoy.
-         * @description Consulta las fechas que tienen cupos disponibles desde hoy.
-         */
-        get: operations["getApiV1AgendaFechasDisponibles"];
+        /** Consulta las fechas que tienen cupos disponibles desde hoy */
+        get: operations["getAgendaFechasDisponibles"];
         put?: never;
         post?: never;
         delete?: never;
@@ -93,11 +81,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Actualiza contrasena en sesion activa.
-         * @description Actualiza contrasena en sesion activa.
-         */
-        post: operations["postApiV1AuthCambiarClave"];
+        /** Actualiza contrasena en sesion activa */
+        post: operations["postAuthCambiarClave"];
         delete?: never;
         options?: never;
         head?: never;
@@ -113,11 +98,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Incrementa los intentos fallidos de login atómicamente y bloquea la cuenta si llega a 5.
-         * @description Incrementa los intentos fallidos de login atómicamente y bloquea la cuenta si llega a 5.
-         */
-        post: operations["postApiV1AuthIntentoFallido"];
+        /** Incrementa los intentos fallidos de login atómicamente y bloquea la cuenta si llega a 5 */
+        post: operations["postAuthIntentoFallido"];
         delete?: never;
         options?: never;
         head?: never;
@@ -133,11 +115,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Valida credenciales e informacion del paciente para login.
-         * @description Valida credenciales e informacion del paciente para login.
-         */
-        post: operations["postApiV1AuthLogin"];
+        /** Valida credenciales e informacion del paciente para login */
+        post: operations["postAuthLogin"];
         delete?: never;
         options?: never;
         head?: never;
@@ -153,11 +132,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Resetea intentos fallidos y actualiza la fecha tras login exitoso.
-         * @description Resetea intentos fallidos y actualiza la fecha tras login exitoso.
-         */
-        post: operations["postApiV1AuthLoginExitoso"];
+        /** Resetea intentos fallidos y actualiza la fecha tras login exitoso */
+        post: operations["postAuthLoginExitoso"];
         delete?: never;
         options?: never;
         head?: never;
@@ -173,11 +149,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Restablece contrasena con token.
-         * @description Restablece contrasena con token.
-         */
-        post: operations["postApiV1AuthRestablecerClave"];
+        /** Restablece contrasena con token */
+        post: operations["postAuthRestablecerClave"];
         delete?: never;
         options?: never;
         head?: never;
@@ -193,11 +166,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Asigna token de recuperacion temporal.
-         * @description Asigna token de recuperacion temporal.
-         */
-        post: operations["postApiV1AuthSolicitarRecuperacion"];
+        /** Asigna token de recuperacion temporal */
+        post: operations["postAuthSolicitarRecuperacion"];
         delete?: never;
         options?: never;
         head?: never;
@@ -211,11 +181,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Valida vigencia de token.
-         * @description Valida vigencia de token.
-         */
-        get: operations["getApiV1AuthValidarTokenRecuperacion"];
+        /** Valida vigencia de token */
+        get: operations["getAuthTokenRecuperacion"];
         put?: never;
         post?: never;
         delete?: never;
@@ -233,11 +200,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Verifica email mediante token.
-         * @description Verifica email mediante token.
-         */
-        post: operations["postApiV1AuthVerificarEmail"];
+        /** Verifica email mediante token */
+        post: operations["postAuthEmail"];
         delete?: never;
         options?: never;
         head?: never;
@@ -253,11 +217,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Reserva y graba una cita médica en la agenda de la clínica.
-         * @description Reserva y graba una cita médica en la agenda de la clínica.
-         */
-        post: operations["postApiV1Citas"];
+        /** Reserva y graba una cita médica en la agenda de la clínica */
+        post: operations["postCitas"];
         delete?: never;
         options?: never;
         head?: never;
@@ -274,11 +235,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /**
-         * Cancela una cita médica y libera el cupo en la agenda.
-         * @description Cancela una cita médica y libera el cupo en la agenda.
-         */
-        delete: operations["deleteApiV1CitasByClaveCita"];
+        /** Cancela una cita médica y libera el cupo en la agenda */
+        delete: operations["deleteCitasClaveCita"];
         options?: never;
         head?: never;
         patch?: never;
@@ -291,11 +249,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta configuracion SMTP de la clinica.
-         * @description Consulta configuracion SMTP de la clinica.
-         */
-        get: operations["getApiV1ConfiguracionParametrosEnvio"];
+        /** Consulta configuracion SMTP de la clinica */
+        get: operations["getConfiguracionParametrosEnvio"];
         put?: never;
         post?: never;
         delete?: never;
@@ -311,11 +266,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta sexos biologicos.
-         * @description Consulta sexos biologicos.
-         */
-        get: operations["getApiV1LookupsBiologicalSexes"];
+        /** Consulta sexos biologicos */
+        get: operations["getLookupsBiologicalSexes"];
         put?: never;
         post?: never;
         delete?: never;
@@ -331,11 +283,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta tipos de documento.
-         * @description Consulta tipos de documento.
-         */
-        get: operations["getApiV1LookupsDocumentTypes"];
+        /** Consulta tipos de documento */
+        get: operations["getLookupsDocumentTypes"];
         put?: never;
         post?: never;
         delete?: never;
@@ -351,11 +300,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta festivos.
-         * @description Consulta festivos.
-         */
-        get: operations["getApiV1LookupsHolidays"];
+        /** Consulta festivos */
+        get: operations["getLookupsHolidays"];
         put?: never;
         post?: never;
         delete?: never;
@@ -371,11 +317,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta el historial de citas paginado de un paciente.
-         * @description Consulta el historial de citas paginado de un paciente.
-         */
-        get: operations["getApiV1PacientesByCodigoPacienteCitas"];
+        /** Consulta el historial de citas paginado de un paciente */
+        get: operations["getPacientesCodigoPacienteCitas"];
         put?: never;
         post?: never;
         delete?: never;
@@ -393,11 +336,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Registra paciente y usuario mediante Stored Procedure.
-         * @description Registra paciente y usuario mediante Stored Procedure.
-         */
-        post: operations["postApiV1PacientesRegistro"];
+        /** Registra paciente y usuario mediante Stored Procedure */
+        post: operations["postPacientesRegistro"];
         delete?: never;
         options?: never;
         head?: never;
@@ -411,11 +351,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta la lista de profesionales y médicos disponibles.
-         * @description Consulta la lista de profesionales y médicos disponibles.
-         */
-        get: operations["getApiV1Profesionales"];
+        /** Consulta la lista de profesionales y médicos disponibles */
+        get: operations["getProfesionales"];
         put?: never;
         post?: never;
         delete?: never;
@@ -431,11 +368,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta las sedes de atención médica de la clínica.
-         * @description Consulta las sedes de atención médica de la clínica.
-         */
-        get: operations["getApiV1Sedes"];
+        /** Consulta las sedes de atención médica de la clínica */
+        get: operations["getSedes"];
         put?: never;
         post?: never;
         delete?: never;
@@ -451,11 +385,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Consulta los servicios médicos disponibles (Cit_Servicios).
-         * @description Consulta los servicios médicos disponibles (Cit_Servicios).
-         */
-        get: operations["getApiV1Servicios"];
+        /** Consulta los servicios médicos disponibles */
+        get: operations["getServicios"];
         put?: never;
         post?: never;
         delete?: never;
@@ -471,10 +402,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Liveness probe para balanceadores de carga.
-         * @description Liveness probe para balanceadores de carga.
-         */
+        /** Liveness probe para balanceadores de carga */
         get: operations["getHealth"];
         put?: never;
         post?: never;
@@ -516,7 +444,7 @@ export interface components {
             /** @description Identificador de la sede médica */
             id_sede: number;
             /**
-             * @description Unidad de medida de edad (AÑOS, MESES, DIAS)
+             * @description Unidad de medida de edad
              * @enum {string}
              */
             ume: "AÑOS" | "MESES" | "DIAS";
@@ -550,6 +478,7 @@ export interface components {
             birth_date: string;
             client_id: number;
             document_type: string;
+            /** Format: email */
             email: string;
             first_last_name: string;
             first_name: string;
@@ -574,6 +503,7 @@ export interface components {
         solicitar_recuperacion_request: {
             client_id: number;
             document_type: string;
+            /** Format: email */
             email: string;
             identification: string;
             reset_token: string;
@@ -591,7 +521,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    get: {
+    getRoot: {
         parameters: {
             query?: never;
             header?: never;
@@ -606,21 +536,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        app?: string;
-                        status?: string;
-                        /** Format: date-time */
-                        timestamp?: string;
-                    };
-                };
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Internal Server Error */
@@ -629,12 +545,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1Actividades: {
+    getActividades: {
         parameters: {
             query: {
                 id_cliente: number;
@@ -651,15 +567,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -668,7 +577,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -677,12 +586,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1Agenda: {
+    getAgenda: {
         parameters: {
             query: {
                 fecha: string;
@@ -705,15 +614,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -722,7 +624,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -731,12 +633,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1AgendaFechasDisponibles: {
+    getAgendaFechasDisponibles: {
         parameters: {
             query: {
                 id_cliente: number;
@@ -754,15 +656,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -771,7 +666,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -780,12 +675,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    postApiV1AuthCambiarClave: {
+    postAuthCambiarClave: {
         parameters: {
             query?: never;
             header?: never;
@@ -804,19 +699,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        message?: string;
-                        status?: string;
-                    };
-                };
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -825,7 +708,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -834,12 +717,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    postApiV1AuthIntentoFallido: {
+    postAuthIntentoFallido: {
         parameters: {
             query?: never;
             header?: never;
@@ -857,15 +740,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -874,7 +750,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -883,12 +759,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    postApiV1AuthLogin: {
+    postAuthLogin: {
         parameters: {
             query?: never;
             header?: never;
@@ -906,22 +782,17 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": Record<string, never>;
+                };
             };
             /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -930,7 +801,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -939,12 +810,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    postApiV1AuthLoginExitoso: {
+    postAuthLoginExitoso: {
         parameters: {
             query?: never;
             header?: never;
@@ -963,18 +834,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        success?: boolean;
-                    };
-                };
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -983,7 +843,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -992,12 +852,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    postApiV1AuthRestablecerClave: {
+    postAuthRestablecerClave: {
         parameters: {
             query?: never;
             header?: never;
@@ -1016,11 +876,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        email?: string;
-                        message?: string;
-                        status?: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Bad Request */
@@ -1028,15 +884,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1045,7 +894,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1054,12 +903,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    postApiV1AuthSolicitarRecuperacion: {
+    postAuthSolicitarRecuperacion: {
         parameters: {
             query?: never;
             header?: never;
@@ -1078,11 +927,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        email?: string;
-                        identification?: string;
-                        status?: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Not Found */
@@ -1090,15 +935,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1107,7 +945,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1116,12 +954,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1AuthValidarTokenRecuperacion: {
+    getAuthTokenRecuperacion: {
         parameters: {
             query: {
                 id_cliente: number;
@@ -1140,18 +978,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        valid?: string;
-                    };
-                };
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1160,7 +987,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1169,12 +996,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    postApiV1AuthVerificarEmail: {
+    postAuthEmail: {
         parameters: {
             query?: never;
             header?: never;
@@ -1193,10 +1020,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        message?: string;
-                        status?: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Bad Request */
@@ -1204,15 +1028,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1221,7 +1038,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1230,12 +1047,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    postApiV1Citas: {
+    postCitas: {
         parameters: {
             query?: never;
             header?: never;
@@ -1254,12 +1071,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Clave o identificador único de reserva */
-                        clave_cita?: string;
-                        message?: string;
-                        status?: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Conflict */
@@ -1268,16 +1080,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unprocessable Entity */
@@ -1286,7 +1089,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1295,17 +1098,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    deleteApiV1CitasByClaveCita: {
+    deleteCitasClaveCita: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Clave única de la cita a cancelar */
                 clave_cita: string;
             };
             cookie?: never;
@@ -1318,21 +1120,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Clave única de la cita a cancelar */
-                        clave_cita?: string;
-                        message?: string;
-                        status?: string;
-                    };
-                };
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1341,7 +1129,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1350,12 +1138,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1ConfiguracionParametrosEnvio: {
+    getConfiguracionParametrosEnvio: {
         parameters: {
             query: {
                 id_cliente: number;
@@ -1371,15 +1159,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1388,7 +1169,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1397,12 +1178,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1LookupsBiologicalSexes: {
+    getLookupsBiologicalSexes: {
         parameters: {
             query?: never;
             header?: never;
@@ -1416,15 +1197,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Internal Server Error */
@@ -1433,12 +1207,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1LookupsDocumentTypes: {
+    getLookupsDocumentTypes: {
         parameters: {
             query?: never;
             header?: never;
@@ -1452,15 +1226,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Internal Server Error */
@@ -1469,12 +1236,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1LookupsHolidays: {
+    getLookupsHolidays: {
         parameters: {
             query?: never;
             header?: never;
@@ -1488,15 +1255,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Internal Server Error */
@@ -1505,12 +1265,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1PacientesByCodigoPacienteCitas: {
+    getPacientesCodigoPacienteCitas: {
         parameters: {
             query: {
                 id_cliente: number;
@@ -1531,15 +1291,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1548,7 +1301,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1557,12 +1310,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    postApiV1PacientesRegistro: {
+    postPacientesRegistro: {
         parameters: {
             query?: never;
             header?: never;
@@ -1580,15 +1333,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1597,7 +1343,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1606,12 +1352,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1Profesionales: {
+    getProfesionales: {
         parameters: {
             query: {
                 id_cliente: number;
@@ -1627,15 +1373,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1644,7 +1383,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1653,12 +1392,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1Sedes: {
+    getSedes: {
         parameters: {
             query: {
                 id_cliente: number;
@@ -1674,15 +1413,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1691,7 +1423,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1700,12 +1432,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
     };
-    getApiV1Servicios: {
+    getServicios: {
         parameters: {
             query: {
                 id_cliente: number;
@@ -1721,15 +1453,8 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Unprocessable Entity */
@@ -1738,7 +1463,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Internal Server Error */
@@ -1747,7 +1472,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
@@ -1767,20 +1492,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        status?: string;
-                        /** Format: date-time */
-                        timestamp?: string;
-                    };
-                };
-            };
-            /** @description Request Entity Too Large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Internal Server Error */
@@ -1789,7 +1501,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

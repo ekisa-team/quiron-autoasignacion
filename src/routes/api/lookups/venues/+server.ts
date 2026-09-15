@@ -3,7 +3,7 @@ import type { RawVenueApi } from "$lib/types/appointments";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ locals }) => {
-  const tunnelUrl = locals.tenant?.apirUrl;
+  const tunnelUrl = locals.tenant?.esquemaUrl;
   if (!tunnelUrl) {
     error(500, "Tunnel url not found");
   }

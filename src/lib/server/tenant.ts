@@ -48,7 +48,7 @@ async function fetchTenantFromDatabase(
       clientId: row.IdCliente,
       name: row.NombreEkisa || "Quirón Autoasignación",
       logoUrl: "/icons/LogoQuiron.png",
-      apirUrl: "http://localhost:8080/api/v1",
+      esquemaUrl: "http://localhost:8080/api/v1",
     };
   } catch (err) {
     console.error("[Tenant DB Error]:", err);

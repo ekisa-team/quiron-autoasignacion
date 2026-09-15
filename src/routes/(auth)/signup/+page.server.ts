@@ -19,7 +19,7 @@ export interface BiologicalSexOption {
 }
 
 export const load: PageServerLoad = async ({ url, locals }) => {
-  const tunnelUrl = locals.tenant?.apirUrl;
+  const tunnelUrl = locals.tenant?.esquemaUrl;
   if (!tunnelUrl) {
     error(500, "Tunnel url not found");
   }

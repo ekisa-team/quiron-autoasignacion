@@ -2,7 +2,7 @@ import { apiPost } from "$lib/server/api";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-  const tunnelUrl = locals.tenant?.apirUrl;
+  const tunnelUrl = locals.tenant?.esquemaUrl;
   if (!tunnelUrl) {
     error(500, "Tunnel url not found");
   }

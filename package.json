@@ -10,7 +10,7 @@
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "apir": "dotenv -- apir serve -c ./apir",
+    "esquema": "dotenv -- esquema serve ./esquema",
     "valkey:flush": "docker exec -it quiron-autoasignacion-valkey valkey-cli FLUSHALL",
     "gen:types": "bun run scripts/generate-types.ts"
   },

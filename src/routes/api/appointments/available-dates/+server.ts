@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     const venueId = Number(url.searchParams.get("venueId"));
     const serviceId = Number(url.searchParams.get("serviceId"));
 
-    const tunnelUrl = locals.tenant?.apirUrl;
+    const tunnelUrl = locals.tenant?.esquemaUrl;
     if (!tunnelUrl) {
       error(500, "Missing HCL API URL");
     }

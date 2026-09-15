@@ -4,9 +4,9 @@ import type { Appointment, RawAppointmentApi } from "$lib/types/appointments";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ url, locals }) => {
-  const tunnelUrl = locals.tenant?.apirUrl;
+  const tunnelUrl = locals.tenant?.esquemaUrl;
   if (!tunnelUrl) {
-    error(500, "No se pudo obtener la URL de apir");
+    error(500, "No se pudo obtener la URL de esquema");
   }
 
   const patientCode = Number(locals.user?.patientId);
@@ -65,9 +65,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 };
 
 export const POST: RequestHandler = async ({ request, locals, url }) => {
-  const tunnelUrl = locals.tenant?.apirUrl;
+  const tunnelUrl = locals.tenant?.esquemaUrl;
   if (!tunnelUrl) {
-    error(500, "No se pudo obtener la URL de apir");
+    error(500, "No se pudo obtener la URL de esquema");
   }
 
   try {

@@ -16,7 +16,7 @@ interface HolidayApiRow {
 export const load: PageServerLoad = async ({ locals }) => {
   const clientId = locals.clientId;
   const patientCode = Number(locals.user?.patientId);
-  const tunnelUrl = locals.tenant?.apirUrl;
+  const tunnelUrl = locals.tenant?.esquemaUrl;
 
   if (!tunnelUrl) {
     error(500, "Tunnel url not found");

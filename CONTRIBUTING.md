@@ -3,7 +3,7 @@
 ## 1. Arquitectura de Acceso a Datos
 
 - **Base de Datos Maestra:** SvelteKit solo interactúa directamente con la base de datos maestra a través de `src/lib/server/master-db.ts` para resolver la tabla `dbo.Clientes`.
-- **Datos Médicos y de Agenda:** SvelteKit no ejecuta consultas directas para pacientes o citas. Todo acceso a datos clínicos debe realizarse consumiendo los endpoints de apir a través de `src/lib/server/api.ts`.
+- **Datos Médicos y de Agenda:** SvelteKit no ejecuta consultas directas para pacientes o citas. Todo acceso a datos clínicos debe realizarse consumiendo los endpoints de esquema a través de `src/lib/server/api.ts`.
 
 ## 2. Convenciones de Estilos y Theming
 
@@ -17,7 +17,7 @@ Para mantener la compatibilidad con el sistema multi-tenant:
 
 Para habilitar una nueva organización en la plataforma no se requiere modificar el código fuente:
 
-1. Crear la carpeta correspondiente con las consultas SQL en `apir/<identificador>/`.
+1. Crear la carpeta correspondiente con las consultas SQL en `esquema/<identificador>/`.
 2. Registrar la fila en la tabla `dbo.Clientes` definiendo su `TenantIdentifier` (subdominio en minúsculas) y su JSON en `AutoassignmentConfig`.
 3. Invalidad la caché de Valkey si ya existía una clave previa para dicho identificador.
 

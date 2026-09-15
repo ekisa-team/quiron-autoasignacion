@@ -8,7 +8,7 @@ const OUTPUT = resolve(import.meta.dir, '../src/lib/types/openapi.ts');
 
 console.log(`Generating OpenAPI types...`);
 
-await $`mkdir -p tmp && apir openapi -c ./apir -o ${INPUT}`;
+await $`mkdir -p tmp && esquema openapi -c ./esquema -o ${INPUT}`;
 
 await $`bunx openapi-typescript ${INPUT} --output ${OUTPUT} --default-non-nullable false --alphabetize`;
 

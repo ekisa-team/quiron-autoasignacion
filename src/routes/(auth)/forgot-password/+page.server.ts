@@ -11,7 +11,7 @@ interface DocumentTypeApiRow {
 export const load: PageServerLoad = async ({ locals }) => {
   const clientId = locals.clientId;
 
-  const tunnelUrl = locals.tenant?.apirUrl;
+  const tunnelUrl = locals.tenant?.esquemaUrl;
   if (!tunnelUrl) {
     error(500, "Tunnel url not found");
   }

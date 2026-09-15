@@ -14,5 +14,5 @@ export interface TenantConfig {
   logoUrl?: string;
   theme?: TenantTheme;
   features?: TenantFeatures;
-  apirUrl?: string;
+  esquemaUrl?: string;
 }

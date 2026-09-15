@@ -14,9 +14,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       pageSize = 50,
     } = body;
 
-    const tunnelUrl = locals.tenant?.apirUrl;
+    const tunnelUrl = locals.tenant?.esquemaUrl;
     if (!tunnelUrl) {
-      error(500, "No se pudo obtener la URL de apir");
+      error(500, "No se pudo obtener la URL de esquema");
     }
 
     const clientId = locals.clientId;
