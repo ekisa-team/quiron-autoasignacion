@@ -1,4 +1,5 @@
 import { apiGet } from "$lib/server/api";
+import { logger } from "$lib/server/logger";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 interface SexRow {
@@ -19,6 +20,7 @@ export const GET: RequestHandler = async ({ locals }) => {
     );
     return json(sexes || []);
   } catch (err) {
+    logger.error({ error: err }, "Error loading sexes");
     const message = err instanceof Error ? err.message : JSON.stringify(err);
     error(500, message);
   }
