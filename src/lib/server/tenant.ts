@@ -1,5 +1,6 @@
 import type { TenantConfig } from "$lib/types/tenant";
 import mssql from "mssql";
+import { logger } from "./logger";
 import { getMasterPool } from "./master-db";
 import { valkey } from "./valkey";
 
@@ -50,8 +51,8 @@ async function fetchTenantFromDatabase(
       logoUrl: "/icons/LogoQuiron.png",
       esquemaUrl: "http://localhost:8080/api/v1",
     };
-  } catch (err) {
-    console.error("[Tenant DB Error]:", err);
+  } catch (error) {
+    logger.error({ identifier, error }, "Error fetching tenant from database");
     return null;
   }
 }
@@ -67,8 +68,11 @@ export async function resolveTenant(
     if (cached) {
       return JSON.parse(cached) as TenantConfig;
     }
-  } catch (err) {
-    console.error("[Valkey Cache Error]:", err);
+  } catch (error) {
+    logger.error(
+      { identifier, cacheKey, error },
+      "Error fetching tenant from cache",
+    );
   }
 
   const tenant = await fetchTenantFromDatabase(normalizedId);
@@ -79,8 +83,8 @@ export async function resolveTenant(
 
   try {
     await valkey.setex(cacheKey, TTL, JSON.stringify(tenant));
-  } catch (err) {
-    console.error("[Valkey Save Error]:", err);
+  } catch (error) {
+    logger.error({ identifier, cacheKey, error }, "Error caching tenant");
   }
 
   return tenant;
@@ -91,6 +95,6 @@ export async function invalidateTenantCache(identifier: string): Promise<void> {
   try {
     await valkey.del(`${CACHE_PREFIX}${normalizedId}`);
   } catch (err) {
-    console.error("[Valkey Delete Error]:", err);
+    logger.error({ identifier, error: err }, "Error invalidating tenant cache");
   }
 }

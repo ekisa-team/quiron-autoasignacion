@@ -1,5 +1,6 @@
 import argon2 from "argon2";
 import crypto from "node:crypto";
+import { logger } from "./logger";
 
 const DEGREE_OF_PARALLELISM = 4;
 const ITERATIONS = 5;
@@ -46,7 +47,7 @@ export async function verifyPassword(
 
     return crypto.timingSafeEqual(computedHash, storedHash);
   } catch (error) {
-    console.error("[Auth Error] Error al verificar contraseña:", error);
+    logger.error({ error }, "Error trying to verify password");
     return false;
   }
 }

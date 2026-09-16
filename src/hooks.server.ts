@@ -20,7 +20,7 @@ const COOKIE_BASE_OPTIONS = {
   path: "/",
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: false,
+  secure: !dev,
 };
 
 function getTenantIdentifier(event: RequestEvent): string | null {

@@ -1,10 +1,11 @@
 import { apiGet } from "$lib/server/api";
+import { logger } from "$lib/server/logger";
 import type {
-    Appointment,
-    MedicalService,
-    RawServiceApi,
-    RawVenueApi,
-    Venue,
+  Appointment,
+  MedicalService,
+  RawServiceApi,
+  RawVenueApi,
+  Venue,
 } from "$lib/types/appointments";
 import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
@@ -108,6 +109,7 @@ export const load: PageServerLoad = async ({ locals }) => {
       },
     };
   } catch (err) {
+    logger.error({ error: err }, "Error loading appointments");
     const message = err instanceof Error ? err.message : JSON.stringify(err);
     error(500, message);
   }
