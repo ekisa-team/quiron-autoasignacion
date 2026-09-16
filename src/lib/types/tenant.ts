@@ -7,6 +7,11 @@ export type TenantFeatures = {
   allowOnlinePayments?: boolean;
 };
 
+export type TenantContact = {
+  emails?: string[];
+  phones?: string[];
+};
+
 export interface TenantConfig {
   tenantIdentifier: string;
   clientId: number;
@@ -14,5 +19,6 @@ export interface TenantConfig {
   logoUrl?: string;
   theme?: TenantTheme;
   features?: TenantFeatures;
+  contact?: TenantContact;
   esquemaUrl?: string;
 }
