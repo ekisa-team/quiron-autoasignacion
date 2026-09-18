@@ -1,4 +1,5 @@
 import { env } from "$env/dynamic/private";
+import { logger } from "./logger";
 
 export async function verifyTurnstileToken(
   token: string,
@@ -25,7 +26,7 @@ export async function verifyTurnstileToken(
     const data = await res.json();
     return Boolean(data.success);
   } catch (error) {
-    console.error("[Turnstile Error]:", error);
+    logger.error({ error }, "Error verifying turnstile token");
     return false;
   }
 }

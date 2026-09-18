@@ -1,5 +1,6 @@
 import { apiDelete } from "$lib/server/api";
 import { sendAppointmentCancellationEmail } from "$lib/server/email";
+import { logger } from "$lib/server/logger";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 interface CancelApiResponse {
@@ -50,7 +51,9 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
         venueName: body.venueName || "Sede principal",
         tenant: locals.tenant,
         tunnelUrl: locals.tenant?.esquemaUrl,
-      }).catch((e) => console.error("[Email Error]:", e));
+      }).catch((error) =>
+        logger.error({ error }, "Error sending appointment cancellation email"),
+      );
     }
 
     return json({ success: true, message: "Cita cancelada correctamente" });

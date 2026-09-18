@@ -1,3 +1,4 @@
+import { dev } from "$app/env";
 import { apiPost } from "$lib/server/api";
 import { generateAccessToken, generateRefreshToken } from "$lib/server/jwt";
 import { verifyPassword } from "$lib/server/password";
@@ -138,7 +139,7 @@ export const POST: RequestHandler = async ({
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: !dev,
       maxAge: 60 * 120,
     });
 
@@ -146,7 +147,7 @@ export const POST: RequestHandler = async ({
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: !dev,
       maxAge: 60 * 60 * 24 * 7,
     });
 

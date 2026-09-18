@@ -1,5 +1,6 @@
 import { apiGet, apiPost } from "$lib/server/api";
 import { sendAppointmentConfirmationEmail } from "$lib/server/email";
+import { logger } from "$lib/server/logger";
 import type { Appointment, RawAppointmentApi } from "$lib/types/appointments";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
@@ -59,6 +60,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
     return json({ items, totalRecords, page, pageSize, totalPages });
   } catch (err) {
+    logger.error({ error: err }, "Error loading appointments");
     const message = err instanceof Error ? err.message : JSON.stringify(err);
     error(500, message);
   }
@@ -126,11 +128,14 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
         originUrl: url.origin,
         tenant: locals.tenant,
         tunnelUrl,
-      }).catch((e) => console.error("[Email Error]:", e));
+      }).catch((error) =>
+        logger.error({ error }, "Error sending appointment confirmation email"),
+      );
     }
 
     return json({ success: true, result: result.data });
   } catch (err) {
+    logger.error({ error: err }, "Error creating appointment");
     const message = err instanceof Error ? err.message : JSON.stringify(err);
     error(500, message);
   }

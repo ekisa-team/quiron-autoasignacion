@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 export async function apiGet<T>(
   baseUrl: string,
   endpoint: string,
@@ -28,7 +30,10 @@ export async function apiGet<T>(
     const data = await res.json();
     return data as T;
   } catch (error) {
-    console.error(`[apiGet Error] ${endpoint}:`, error);
+    logger.error(
+      { baseUrl, endpoint, params },
+      `[apiGet Error] ${endpoint}: ${error}`,
+    );
     throw error;
   }
 }
@@ -57,7 +62,10 @@ export async function apiPost<T, B = Record<string, unknown>>(
 
     return { data, status, ok };
   } catch (error) {
-    console.error(`[apiPost Error] ${endpoint}:`, error);
+    logger.error(
+      { baseUrl, endpoint, body },
+      `[apiPost Error] ${endpoint}: ${error}`,
+    );
     throw error;
   }
 }
@@ -81,7 +89,10 @@ export async function apiDelete<T>(
 
     return { data, status, ok };
   } catch (error) {
-    console.error(`[apiDelete Error] ${endpoint}:`, error);
+    logger.error(
+      { baseUrl, endpoint },
+      `[apiDelete Error] ${endpoint}: ${error}`,
+    );
     throw error;
   }
 }
