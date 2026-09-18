@@ -1,63 +1,63 @@
 schema "registro_paciente_request" {
   field "document_type" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "identification" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "first_name" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "second_name" {
-    type    = "string"
+    type    = string
     default = ""
   }
   field "first_last_name" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "second_last_name" {
-    type    = "string"
+    type    = string
     default = ""
   }
   field "birth_date" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "gender" {
-    type    = "string"
+    type    = string
     default = "M"
   }
   field "address" {
-    type    = "string"
+    type    = string
     default = ""
   }
   field "phone" {
-    type    = "string"
+    type    = string
     default = ""
   }
   field "mobile" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "email" {
-    type     = "string"
+    type     = string
     format   = "email"
     required = true
   }
   field "password_hash" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "verification_token" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "client_id" {
-    type     = "integer"
+    type     = integer
     required = true
   }
 }
@@ -70,7 +70,7 @@ route "POST /api/v1/pacientes/registro" {
     body = registro_paciente_request
   }
 
-  step "sql" "registrar" {
+  sql "registrar" {
     connection = "main"
     query      = <<-SQL
       EXEC dbo.Proc_Aut_RegistrarPacienteWeb 
@@ -121,28 +121,28 @@ route "GET /api/v1/pacientes/{codigo_paciente}/citas" {
 
   request {
     path "codigo_paciente" {
-      type     = "integer"
+      type     = integer
       required = true
     }
     query "id_cliente" {
-      type     = "integer"
+      type     = integer
       required = true
     }
     query "tipo" {
-      type    = "string"
+      type    = string
       default = "TODAS"
     }
     query "page" {
-      type    = "integer"
+      type    = integer
       default = 1
     }
     query "page_size" {
-      type    = "integer"
+      type    = integer
       default = 5
     }
   }
 
-  step "sql" "consultar_citas_paciente" {
+  sql "consultar_citas_paciente" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ConsultarCitasPaciente @CodigoPaciente, @IdCliente, @TipoConsulta, @PageNumber, @PageSize"
     args = {

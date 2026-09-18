@@ -1,53 +1,53 @@
 schema "grabar_cita_request" {
   field "fecha_servicio" {
-    type        = "string"
+    type        = string
     format      = "date"
     required    = true
     description = "Fecha de la cita (YYYY-MM-DD)"
   }
   field "hora_servicio" {
-    type        = "string"
+    type        = string
     required    = true
     description = "Hora de la cita (HH:MM o HH:MM:SS)"
   }
   field "codigo_paciente" {
-    type        = "string"
+    type        = string
     required    = true
     description = "Código o historia del paciente"
   }
   field "id_profesional" {
-    type        = "integer"
+    type        = integer
     required    = true
     description = "Identificador del médico o profesional"
   }
   field "id_cliente" {
-    type        = "integer"
+    type        = integer
     required    = true
     description = "Identificador de la institución"
   }
   field "id_actividad_cita" {
-    type        = "integer"
+    type        = integer
     required    = true
     description = "Identificador del tipo de actividad o cita"
   }
   field "clave_cita" {
-    type        = "string"
+    type        = string
     required    = true
     description = "Clave o identificador único de reserva"
   }
   field "id_sede" {
-    type        = "integer"
+    type        = integer
     required    = true
     description = "Identificador de la sede médica"
   }
   field "edad" {
-    type        = "integer"
+    type        = integer
     min         = 0
     required    = true
     description = "Edad del paciente"
   }
   field "ume" {
-    type        = "string"
+    type        = string
     required    = true
     enum        = ["AÑOS", "MESES", "DIAS"]
     description = "Unidad de medida de edad"
@@ -62,7 +62,7 @@ route "POST /api/v1/citas" {
     body = grabar_cita_request
   }
 
-  step "sql" "grabar_cita" {
+  sql "grabar_cita" {
     connection = "main"
     query      = <<-SQL
       EXEC dbo.Proc_Aut_GrabarCitas 
@@ -89,11 +89,15 @@ route "POST /api/v1/citas" {
       Edad            = ctx.request.body.edad
       UME             = ctx.request.body.ume
     }
-    catch "2627" {
+
+    catch {
+      code   = "2627"
       status = 409
       body   = problem(409, "El cupo o la clave de cita ya se encuentra reservada")
     }
-    catch "2601" {
+
+    catch {
+      code   = "2601"
       status = 409
       body   = problem(409, "El cupo o la clave de cita ya se encuentra reservada")
     }
@@ -115,13 +119,13 @@ route "DELETE /api/v1/citas/{clave_cita}" {
 
   request {
     path "clave_cita" {
-      type        = "string"
+      type        = string
       required    = true
       description = "Clave única de la cita a cancelar"
     }
   }
 
-  step "sql" "cancelar_cita" {
+  sql "cancelar_cita" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_CancelarCita @ClaveCita"
     args = {

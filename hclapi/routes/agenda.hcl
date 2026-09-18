@@ -4,40 +4,40 @@ route "GET /api/v1/agenda" {
 
   request {
     query "fecha" {
-      type     = "string"
+      type     = string
       required = true
     }
     query "id_sede" {
-      type     = "integer"
+      type     = integer
       required = true
     }
     query "id_cliente" {
-      type     = "integer"
+      type     = integer
       required = true
     }
     query "id_profesional" {
-      type    = "integer"
+      type    = integer
       default = 0
     }
     query "id_servicio" {
-      type    = "integer"
+      type    = integer
       default = 0
     }
     query "id_actividad" {
-      type    = "integer"
+      type    = integer
       default = 0
     }
     query "page" {
-      type    = "integer"
+      type    = integer
       default = 1
     }
     query "page_size" {
-      type    = "integer"
+      type    = integer
       default = 50
     }
   }
 
-  step "sql" "consultar_agenda" {
+  sql "consultar_agenda" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_AgendaCitas @FechaC, @IdSede, @IdCliente, @IdProfesional, @IdServicio, @IdActividad, @PageNumber, @PageSize"
     args = {
@@ -64,20 +64,20 @@ route "GET /api/v1/agenda/fechas-disponibles" {
 
   request {
     query "id_cliente" {
-      type     = "integer"
+      type     = integer
       required = true
     }
     query "id_sede" {
-      type    = "integer"
+      type    = integer
       default = 0
     }
     query "id_servicio" {
-      type    = "integer"
+      type    = integer
       default = 0
     }
   }
 
-  step "sql" "consultar_fechas" {
+  sql "consultar_fechas" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ConsultarFechasDisponibles @IdCliente, @IdSede, @IdServicio"
     args = {

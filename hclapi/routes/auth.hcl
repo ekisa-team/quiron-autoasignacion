@@ -1,29 +1,29 @@
 schema "login_request" {
   field "identificacion" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "codigo_tipo_documento" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "id_cliente" {
-    type     = "integer"
+    type     = integer
     required = true
   }
 }
 
 schema "change_password_request" {
   field "patient_id" {
-    type     = "integer"
+    type     = integer
     required = true
   }
   field "client_id" {
-    type     = "integer"
+    type     = integer
     required = true
   }
   field "new_password_hash" {
-    type       = "string"
+    type       = string
     required   = true
     min_length = 6
   }
@@ -31,64 +31,64 @@ schema "change_password_request" {
 
 schema "solicitar_recuperacion_request" {
   field "document_type" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "identification" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "email" {
-    type     = "string"
+    type     = string
     format   = "email"
     required = true
   }
   field "reset_token" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "client_id" {
-    type     = "integer"
+    type     = integer
     required = true
   }
 }
 
 schema "restablecer_clave_token_request" {
   field "token" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "new_password_hash" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "client_id" {
-    type     = "integer"
+    type     = integer
     required = true
   }
 }
 
 schema "verificar_email_request" {
   field "token" {
-    type     = "string"
+    type     = string
     required = true
   }
   field "client_id" {
-    type     = "integer"
+    type     = integer
     required = true
   }
 }
 
 schema "login_fallido_request" {
   field "usuario_id" {
-    type     = "integer"
+    type     = integer
     required = true
   }
 }
 
 schema "login_exitoso_request" {
   field "usuario_id" {
-    type     = "integer"
+    type     = integer
     required = true
   }
 }
@@ -101,7 +101,7 @@ route "POST /api/v1/auth/login" {
     body = login_request
   }
 
-  step "sql" "consultar_paciente" {
+  sql "consultar_paciente" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ConsultarPacienteLogin @Identificacion, @CodigoTipoDocumento, @IdCliente"
     args = {
@@ -131,7 +131,7 @@ route "POST /api/v1/auth/cambiar-clave" {
     body = change_password_request
   }
 
-  step "sql" "cambiar_clave" {
+  sql "cambiar_clave" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_CambiarClaveSesion @PatientId, @ClientId, @NewPasswordHash"
     args = {
@@ -158,7 +158,7 @@ route "POST /api/v1/auth/solicitar-recuperacion" {
     body = solicitar_recuperacion_request
   }
 
-  step "sql" "solicitar_token" {
+  sql "solicitar_token" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_SolicitarRecuperacionClave @Doc, @DocType, @Email, @Token, @ClientId"
     args = {
@@ -194,7 +194,7 @@ route "POST /api/v1/auth/restablecer-clave" {
     body = restablecer_clave_token_request
   }
 
-  step "sql" "restablecer" {
+  sql "restablecer" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_RestablecerClaveToken @Token, @NewPasswordHash, @ClientId"
     args = {
@@ -228,7 +228,7 @@ route "POST /api/v1/auth/verificar-email" {
     body = verificar_email_request
   }
 
-  step "sql" "verificar_token" {
+  sql "verificar_token" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_VerificarEmailToken @Token, @ClientId"
     args = {
@@ -258,20 +258,20 @@ route "GET /api/v1/auth/validar-token-recuperacion" {
 
   request {
     query "token" {
-      type     = "string"
+      type     = string
       required = true
     }
     query "identificacion" {
-      type     = "string"
+      type     = string
       required = true
     }
     query "id_cliente" {
-      type     = "integer"
+      type     = integer
       required = true
     }
   }
 
-  step "sql" "comprobar_token" {
+  sql "comprobar_token" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ValidarTokenRecuperacion @Token, @Doc, @ClientId"
     args = {
@@ -297,7 +297,7 @@ route "POST /api/v1/auth/intento-fallido" {
     body = login_fallido_request
   }
 
-  step "sql" "registrar_intento" {
+  sql "registrar_intento" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_RegistrarIntentoFallido @Id"
     args = {
@@ -319,7 +319,7 @@ route "POST /api/v1/auth/login-exitoso" {
     body = login_exitoso_request
   }
 
-  step "sql" "registrar_exito" {
+  sql "registrar_exito" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_RegistrarLoginExitoso @Id"
     args = {

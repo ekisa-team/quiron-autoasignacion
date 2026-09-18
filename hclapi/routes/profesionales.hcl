@@ -4,12 +4,12 @@ route "GET /api/v1/profesionales" {
 
   request {
     query "id_cliente" {
-      type     = "integer"
+      type     = integer
       required = true
     }
   }
 
-  step "sql" "consultar_profesionales" {
+  sql "consultar_profesionales" {
     connection = "main"
     query      = "EXEC dbo.Proc_Autoasignacion_ConsultarProfesionales @IdCliente"
     args = {

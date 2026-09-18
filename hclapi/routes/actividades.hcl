@@ -4,16 +4,16 @@ route "GET /api/v1/actividades" {
 
   request {
     query "id_cliente" {
-      type     = "integer"
+      type     = integer
       required = true
     }
     query "id_servicio" {
-      type    = "integer"
+      type    = integer
       default = 0
     }
   }
 
-  step "sql" "consultar_actividades" {
+  sql "consultar_actividades" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ConsultarActividadesPorServicio @IdCliente, @IdServicio"
     args = {

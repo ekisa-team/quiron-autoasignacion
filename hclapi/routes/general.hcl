@@ -4,12 +4,12 @@ route "GET /api/v1/configuracion/parametros-envio" {
 
   request {
     query "id_cliente" {
-      type     = "integer"
+      type     = integer
       required = true
     }
   }
 
-  step "sql" "consultar_smtp" {
+  sql "consultar_smtp" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ConsultarParametrosEnvio @IdCliente"
     args = {
@@ -27,7 +27,7 @@ route "GET /api/v1/lookups/holidays" {
   summary = "Consulta festivos"
   tag     = "catalogos"
 
-  step "sql" "consultar_festivos" {
+  sql "consultar_festivos" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ConsultarFestivos"
   }
@@ -42,7 +42,7 @@ route "GET /api/v1/lookups/document-types" {
   summary = "Consulta tipos de documento"
   tag     = "catalogos"
 
-  step "sql" "consultar_tipos_doc" {
+  sql "consultar_tipos_doc" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ConsultarTiposDocumento 'PAC'"
   }
@@ -57,7 +57,7 @@ route "GET /api/v1/lookups/biological-sexes" {
   summary = "Consulta sexos biologicos"
   tag     = "catalogos"
 
-  step "sql" "consultar_sexos" {
+  sql "consultar_sexos" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ConsultarSexosBiologicos"
   }

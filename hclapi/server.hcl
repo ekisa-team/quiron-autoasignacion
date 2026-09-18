@@ -8,9 +8,6 @@ server {
 
 telemetry {
   service_name = "quiron-autoasignacion"
-
-  logging {
-    level  = "debug"
-    format = "json"
-  }
+  log_level    = "debug"
+  log_format   = "json"
 }

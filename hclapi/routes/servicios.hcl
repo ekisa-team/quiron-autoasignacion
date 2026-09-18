@@ -4,12 +4,12 @@ route "GET /api/v1/servicios" {
 
   request {
     query "id_cliente" {
-      type     = "integer"
+      type     = integer
       required = true
     }
   }
 
-  step "sql" "consultar_servicios" {
+  sql "consultar_servicios" {
     connection = "main"
     query      = "EXEC dbo.Proc_Aut_ConsultarServicios @IdCliente"
     args = {
